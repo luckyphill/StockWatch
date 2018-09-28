@@ -15,10 +15,14 @@
 ## The installer will only run if this file does not exist, otherwise, things will be
 ## handled by the Tracker object
 
-class Installer:
-	def __init__(self,path):
+import os
+import csv
 
-		pass
+class Installer:
+	def __init__(self,path_inst_dir,path_raw_data):
+		self.PATH_TO_INSTALL_DIRECTORY = path_inst_dir
+		self.RAW_PATH = path_raw_data
+		self.ALL_CODES_FILE = self.PATH_TO_INSTALL_DIRECTORY + 'all_codes.csv'
 
 	def install(self):
 		## Performs the installation
@@ -27,3 +31,33 @@ class Installer:
 	def write_installation_file(self):
 		## Writes a file that will be used to track all the information about
 		pass
+
+	def GetPath(self):
+		return self.PATH_TO_INSTALL_DIRECTORY
+
+	def GetRawPath(self):
+		return self.RAW_PATH
+
+	def GetInitialCodes(self):
+		## Reads the most recent of the raw_data files and grabs the stock codes
+		all_codes = []
+
+		latest_file = os.listdir(self.RAW_PATH)[0]
+		for file in os.listdir(self.RAW_PATH)[1:]:
+			if file > latest_file:
+				latest_file = file
+
+		path_to_latest_file = self.RAW_PATH + latest_file
+
+		with open(path_to_latest_file, 'rU') as csvfile:
+			code_reader = csv.reader(csvfile, dialect='excel')
+			for code in code_reader:
+				all_codes.append(code[0])
+
+		with open(self.ALL_CODES_FILE,'w') as file:
+			for code in all_codes:
+				file.write(code + '\n')
+
+
+
+
