@@ -32,6 +32,7 @@ class Tracker:
 
 	def startup_sequence(self):
 		## Things to do when booted
+		
 
 		pass
 
