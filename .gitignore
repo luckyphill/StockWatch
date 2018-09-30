@@ -2,3 +2,11 @@
 __pycache__/*
 *.pyc
 .pytest_cache/*
+global_vars.py
+all_codes.csv
+logs/*
+data/*
+testing/logs/*
+testing/data/*
+testing/global_vars.py
+testing/all_codes.csv

@@ -117,10 +117,21 @@ def testInstallationErrorCatch():
 		inst = installer.Installer(PATH_FOR_INSTALLER,PATH_FOR_INSTALLER +'lemon/',TEST_EARLIEST_YEAR)
 
 	empty_folder = PATH_FOR_INSTALLER + 'empty/'
+
+	os.system('rm -rf ' + empty_folder)
 	os.makedirs(empty_folder)
 	with pytest.raises(Exception):
 		## No data in folder
 		inst = installer.Installer(PATH_FOR_INSTALLER,empty_folder,TEST_EARLIEST_YEAR)
+
+	## Make a global_vars.py file to fool the installer
+	fake_global_vars_file = PATH_FOR_INSTALLER  + "global_vars.py"
+	os.system('touch ' + fake_global_vars_file)
+	with pytest.raises(Exception):
+		## Global vars file already exists
+		inst = installer.Installer(PATH_FOR_INSTALLER,RAW_DATA,TEST_EARLIEST_YEAR)
+	os.system('rm ' + fake_global_vars_file)
+
 
 
 

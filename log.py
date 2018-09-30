@@ -7,12 +7,12 @@ import logging.handlers
 
 def setup_custom_logger(name,path):
 
-	formatter = logging.Formatter(fmt='%(asctime)s - %(module)s - %(message)s')
-	handler = logging.handlers.RotatingFileHandler(path,mode='a', maxBytes=1048576, backupCount=1)
-	handler.setFormatter(formatter)
-
 	logger = logging.getLogger(name)
 	logger.setLevel(logging.INFO)
-	logger.addHandler(handler)
+	if not len(logger.handlers):
+		formatter = logging.Formatter(fmt='%(asctime)s - %(module)s - %(message)s')
+		handler = logging.handlers.RotatingFileHandler(path,mode='a', maxBytes=1048576, backupCount=1)
+		handler.setFormatter(formatter)
+		logger.addHandler(handler)
 
 	return logger

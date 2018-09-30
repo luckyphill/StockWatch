@@ -14,15 +14,15 @@
 ## Thirdly, global variable are written to global_vars.py including log file handling
 ## The installer will only be run if this file does not exist, otherwise, things will be
 ## handled by the Tracker object
+## The installer is dumb and will blindly overwrite anything in the directory
+
 
 import os
+import re
 import csv
 import log
 import logging
 import datetime as dt
-
-
-G_ALL_CODES_FILE = 'all_codes.csv'
 
 
 class Installer:
@@ -30,8 +30,15 @@ class Installer:
 		self.PATH_TO_INSTALL_DIRECTORY = path_inst_dir
 		self.RAW_PATH = path_raw_data
 		self.DATA_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'data/'
-		self.ALL_CODES_FILE = self.PATH_TO_INSTALL_DIRECTORY + G_ALL_CODES_FILE
+		self.ALL_CODES_FILE_NAME = 'all_codes.csv'
+		self.TIME_SERIES_FILE_NAME = 'time_series.csv'
+		self.RAW_DATA_REGEX_PATTERN = '\d{8}.txt'
+		self.GLOBAL_VARS_FILE_NAME = 'global_vars.py'
+
+		self.ALL_CODES_FILE = self.PATH_TO_INSTALL_DIRECTORY + self.ALL_CODES_FILE_NAME
+		self.GLOBAL_VARS_FILE = self.PATH_TO_INSTALL_DIRECTORY + self.GLOBAL_VARS_FILE_NAME
 		self.LOG_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'logs/'
+
 		
 		if not os.path.exists(self.LOG_PATH):
 				os.makedirs(self.LOG_PATH)
@@ -52,12 +59,15 @@ class Installer:
 			raise ValueError('Path to raw data not found. Please provide the absolute path to a folder with the specified data format.')
 
 		if not os.listdir(self.RAW_PATH):
-			logger.exception("No files in the raw data path: %s", self.RAW_PATH)
+			logger.error("No files in the raw data path: %s", self.RAW_PATH)
 			raise Exception("No files in the raw data path. Nothing can be done if there is no data!")
+			
 
 		if not os.path.exists(self.PATH_TO_INSTALL_DIRECTORY):
 			logger.info("Install path does not exist. Creating now")
 			os.makedirs(self.PATH_TO_INSTALL_DIRECTORY)
+
+		self.install()
 
 	def GetPath(self):
 		return self.PATH_TO_INSTALL_DIRECTORY
@@ -70,6 +80,11 @@ class Installer:
 
 	def install(self):
 		logger = logging.getLogger('root')
+
+		if os.path.isfile(self.GLOBAL_VARS_FILE):
+			logger.error("%s detected. Assuming installation already exists", self.GLOBAL_VARS_FILE_NAME)
+			raise Exception("It looks like you already have an installation. Aborting installation")
+
 
 		logger.info('Getting initial codes from file')
 		self.GetInitialCodes()
@@ -90,8 +105,14 @@ class Installer:
 		## This is so the installer has something to install
 		logger = logging.getLogger('root')
 
-		latest_file = os.listdir(self.RAW_PATH)[0]
-		for file in os.listdir(self.RAW_PATH)[1:]:
+		## Get only the files that match the pattern YYYMMDD.txt
+		regex = re.compile(self.RAW_DATA_REGEX_PATTERN)
+		files = [f for f in os.listdir(self.RAW_PATH) if regex.match(f)]
+
+		logger.info('Detected %d files',len(files))
+		latest_file = files[0]
+
+		for file in files:
 			if file > latest_file:
 				latest_file = file
 
@@ -100,11 +121,13 @@ class Installer:
 		logger.info('Most recent date in raw data is %s',latest_file)
 
 		with open(path_to_latest_file, 'rU') as csvfile:
-			code_reader = csv.reader(csvfile, dialect='excel')
-			for code in code_reader:
-				self.initial_codes.append(code[0])
+			data_reader = csv.reader(csvfile, dialect='excel')
+			for line in data_reader:
+				code = line[0]
+				if code not in self.initial_codes:
+					self.initial_codes.append(code)
 
-		logger.info('Added %d codes', len(self.initial_codes))
+		logger.info('Now have a total of %d codes', len(self.initial_codes))
 		with open(self.ALL_CODES_FILE,'w') as file:
 			for code in self.initial_codes:
 				file.write(code + '\n')
@@ -147,7 +170,7 @@ class Installer:
 			if not os.path.exists(code_path):
 				os.makedirs(code_path)
 			
-			file_name = code_path + "time_series.csv"
+			file_name = code_path + self.TIME_SERIES_FILE_NAME
 			with open(file_name, 'wb') as csvfile:
 				writer = csv.writer(csvfile, delimiter=',')
 				for row in stockPriceData[code]:
@@ -157,14 +180,22 @@ class Installer:
 
 	def WriteGlobalVariables(self):
 		## Writes a file that will be used to track all the information about
-		global_vars_file = self.PATH_TO_INSTALL_DIRECTORY + "global_vars.py"
-		with open(global_vars_file, 'w') as gv_file:
+		with open(self.GLOBAL_VARS_FILE, 'w') as gv_file:
 			gv_file.write("## Automatically generated file. Modifying may break the installation\n\n")
-			gv_file.write("APP_PATH 		= '%s'\n" % self.PATH_TO_INSTALL_DIRECTORY)
-			gv_file.write("DATA_PATH 		= '%s'\n" % self.DATA_PATH)
-			gv_file.write("ALL_CODES_FILE 	= '%s'\n" % self.ALL_CODES_FILE)
-			gv_file.write("LOG_FILE 		= '%slog_file.log'\n" % self.LOG_PATH)
-			gv_file.write("LOG 			= 'log_reference' # Just some name to put in the variable\n")
+			gv_file.write("APP_PATH 				= '%s'\n" % self.PATH_TO_INSTALL_DIRECTORY)
+			gv_file.write("DATA_PATH 				= '%s'\n" % self.DATA_PATH)
+			gv_file.write("ALL_CODES_FILE 			= '%s'\n" % self.ALL_CODES_FILE)
+			gv_file.write("LOG_FILE 				= '%slog_file.log'\n" % self.LOG_PATH)
+			gv_file.write("TIME_SERIES_FILE_NAME 	= '%s'\n" % self.TIME_SERIES_FILE_NAME)
+			gv_file.write("LOG 					= 'log_reference' # Just some name to put in the variable\n")
 			gv_file.write('\n#=================================================\n\n')
+			gv_file.write("## Creating the global logger\n")
 			gv_file.write('import logging\nimport log\n')
 			gv_file.write("log.setup_custom_logger(LOG, LOG_FILE)\n")
+
+class Uninstaller:
+	def __init__(self, path_inst_dir):
+		## Removes all the data in the installation path
+		## Might be better implemented as a script writer in the Installer
+
+		pass
