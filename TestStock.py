@@ -9,8 +9,8 @@ import stock
 import installer
 import updater
 
-## PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
+PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
+#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
 
 RAW_DATA = PATH_FOR_INSTALLER + 'raw_data/'
 

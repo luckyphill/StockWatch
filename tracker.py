@@ -10,12 +10,26 @@
 ## I imagine it will be possible to have multiple trackers running with different watch lists, but I don't see why this should happen
 ## Perhaps running this as a singleton would be a good idea
 
+from global_vars import *
+import csv
+import stock
+
+
 class Tracker:
-	def __init__(self, watch_list):
+	def __init__(self, initial_watch_list):
 		self.watch_list = []
-		self.load_watch_list()
+		self.WATCH_LIST_FILE = initial_watch_list
 		self.is_installed()
 
+	def GetWatchList(self):
+		## Loads the watch_list from file
+
+		watch_list = []
+		with open(self.WATCH_LIST_FILE,'r') as file:
+			data_reader = csv.reader(file)
+			watch_list = list(data_reader)
+
+		return watch_list
 
 	def eod_update(self):
 		## for each stock, run its update procedure

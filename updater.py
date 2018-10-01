@@ -8,6 +8,7 @@
 import requests
 from bs4 import BeautifulSoup
 
+import csv
 import time
 import datetime as dt
 
@@ -27,7 +28,7 @@ class Updater:
 		pass
 
 class FromBigCharts:#(Updater):
-	def __init__(self, code, last_date):
+	def __init__(self, code):
 		URL = 'http://bigcharts.marketwatch.com/quickchart/quickchart.asp?symb=AU%3A'
 		URL_END = '&insttype=Stock&freq=1&show=&time=8'
 
@@ -45,32 +46,34 @@ class FromBigCharts:#(Updater):
 		## relatively expensive, so this is the quickest option for now
 		## Ideally, the last date should be handed to the updater from the
 		## stock object every time FetchNewData is called
-		self.last_date = last_date
+		#self.last_date = last_date
 
-	def FetchNewData(self):
+	def FetchNewData(self, last_quote_date):
 		## Gets the all the missing data from BigCharts
+		## last_quote_date will be provided from Stock, which will get it
+		## directly from the file.
 		logger = logging.getLogger(LOG)
 		logger.info("Getting new data for %s", self.code)
 
-		##
+		## A list to hold all the data retrieved
 		new_data = []
 
 		today = dt.date.today().strftime ("%Y%m%d")
 
-		if self.last_date == today: # make sure we haven't already got today's data
+		if last_quote_date == today: # make sure we haven't already got today's data
 			
 			logger.info("Data appears to be up to date.")
 		
-		elif self.last_date < today: # make sure we're adding the next date
+		elif last_quote_date < today: # make sure we're adding the next date
 			logger.info("Getting missing data")
 			logger.info("Fetching most recent data for date %s", today)
 			
 			most_recent = self.FetchMostRecent()
 			most_recent_date = most_recent[0]
 
-			next_date = self.GetNextDate(self.last_date)
+			next_date = self.GetNextDate(last_quote_date)
 
-			## If the next date after last_date isn't most_recent_date
+			## If the next date after last_quote_date isn't most_recent_date
 			## then we need to make sure the data in between exists
 			## This while loop will always be triggered on a Monday so
 			## need to skip the data fetching if next_date is a weekend
@@ -101,8 +104,6 @@ class FromBigCharts:#(Updater):
 
 
 			new_data.append(most_recent)
-
-			self.last_date = most_recent_date
 
 		else:
 			logger.error("Something has gone wrong, we appear to be adding old data for " + self.code)
@@ -230,17 +231,128 @@ class FromBigCharts:#(Updater):
 		new_date = str(year) + str(month).zfill(2) + str(day).zfill(2)
 		return new_date
 
-class ForTesting(Updater):
+class ForTesting:
 	## For testing only. Gets new data from /testing/fake_new_data/
-	## In the end, I haven't ended up using this, but it will be better 
-	## to make the testing totally determined and not dependent on the actual date
+	## This is important for testing Tracker
+	
 	def __init__(self, code):
 		self.NEW = APP_PATH + 'fake_new_data/'
+		self.code = code
+
+	def FetchNewData(self, last_quote_date, fake_today):
+		## Gets the all the missing data from BigCharts
+		## last_quote_date will be provided from Stock, which will get it
+		## directly from the file.
+
+		today = fake_today
+
+		logger = logging.getLogger(LOG)
+		logger.info("Getting new data for %s", self.code)
+
+		## A list to hold all the data retrieved
+		new_data = []
+
+		if last_quote_date == today: # make sure we haven't already got today's data
+			
+			logger.info("Data appears to be up to date.")
+		
+		elif last_quote_date < today: # make sure we're adding the next date
+			logger.info("Getting missing data")
+			logger.info("Fetching most recent data for date %s", today)
+			
+			most_recent = self.FetchData(today)
+			most_recent_date = today
+
+			next_date = self.GetNextDate(last_quote_date)
+
+			## If the next date after last_quote_date isn't most_recent_date
+			## then we need to make sure the data in between exists
+			## This while loop will always be triggered on a Monday so
+			## need to skip the data fetching if next_date is a weekend
+			logger.info("Checking for other missing dates")
+			while next_date < most_recent_date and next_date < '20190000':
+				year 	= int(next_date[:4])
+				month 	= int(next_date[4:6])
+				day 	= int(next_date[6:])
+
+				try:
+					if dt.datetime(year,month,day).weekday()<5:
+						## Ignore weekends
+						data = self.FetchData(next_date)
+						
+						if data:
+							## Sometime weekdays won't have data i.e. public holidays
+							logger.info("Retrieved data for %s, %s", next_date, data)
+							
+							if data[-1] == 'n/a':
+								logger.info('Caught day with no trading')
+								data[-1] = 0
+							
+							new_data.append(data)
+				except:
+					logger.info("February problem caught")
+				
+				next_date = self.GetNextDate(next_date)
 
 
-	def FetchNewData(self):
+			new_data.append(most_recent)
 
-		files = sorted(os.listdir(self.RAW_PATH))
+		else:
+			logger.error("Something has gone wrong, we appear to be adding old data for " + self.code)
+			raise Exception("Something has gone wrong, we appear to be adding old data for " + self.code)
+			return False
+
+		return new_data
+	
+	def FetchData(self, date):
+		logger = logging.getLogger(LOG)
+
+		## In the data file are all stocks for that date,
+		## need to get the specific one we're after
+		data_file = self.NEW + date + '.txt'
+		logger.info("Retrieving data for %s from %s",self.code, data_file)
+
+		data = []
+
+		try:
+			with open(data_file,'r') as file:
+				data_reader = csv.reader(file)
+				for line in data_reader:
+					if line[0] == self.code:
+						data = line[1:]
+						break
+		except:
+			data = False
+
+
+		return data
+
+	def GetNextDate(self,date):
+		## Takes a date as a string in the format YYYYMMDD
+		## Gives the next date assuming a max of 31 days and 12 months
+		## It would probably be much smarter to use a datetime increment
+		## but this works
+		year 	= int(date[:4])
+		month 	= int(date[4:6])
+		day 	= int(date[6:])
+
+		day = day + 1
+		if day > 31 or (day > 30 and month in [4,6,9,11]) or (day > 29 and month == 2):
+			day = 1
+			month = month + 1
+			if month > 12:
+				month = 1
+				year = year + 1
+
+		new_date = str(year) + str(month).zfill(2) + str(day).zfill(2)
+		return new_date
+
+
+
+
+
+
+
 
 		
 
