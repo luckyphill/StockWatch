@@ -5,7 +5,7 @@
 ## This section is only needed for testing
 ## It should be deleted before running properly
 import sys
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 ##=====================================================
 
@@ -36,10 +36,10 @@ class Stock:
 		## date,open,high,low,close,volume
 
 		stockData = []
-		with open(DATA_FILE,'r') as csvfile:
+		with open(self.DATA_FILE,'r') as csvfile:
 			data_reader = csv.reader(csvfile)
 			for line in data_reader:
-				stockData.append(float(line[4]))
+				stockData.append([float(i) for i in line])
 
 		return stockData
 
@@ -49,13 +49,14 @@ class Stock:
 		## This will get the latest data at a time controlled by Tracker
 		## Since it uses an Updater object, we don't care about the implementation
 		
-		new_data = self.updater.FetchNewData(self.GetLastDate())
+		new_data = self.updater.FetchNewData()
 		
 		## new_data is either a list with the new data or bool False
 		if new_data:
 			with open(self.DATA_FILE,'a') as csvfile:
 				data_writer = csv.writer(csvfile)
-				data_writer.writerow(new_data)
+				for row in new_data:
+					data_writer.writerow(row)
 
 
 

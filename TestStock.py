@@ -7,9 +7,10 @@ import filecmp
 
 import stock
 import installer
+import updater
 
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-## PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
+## PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
 
 RAW_DATA = PATH_FOR_INSTALLER + 'raw_data/'
 
@@ -39,17 +40,17 @@ def testStockObjectSteps():
 	## We've definitely got global_vars.py, so assume there is an existing installation
 	## First check that the stock object initialises properly
 
-	st = stock.Stock(TEST_CODE)
+	st = stock.Stock(TEST_CODE, updater.FromBigCharts)
 	assert st.GetDataFile() == TEST_TIME_SERIES_FILE
 
 	#=============================================================
 	## Check that data loads correctly
-	data = st.LoadStockData()
+	data = st.GetStockData()
 
 	data_comp = []
 	with open(COMPARISON_TIME_SERIES_FILE,'r') as csvfile:
 		data_reader = csv.reader(csvfile)
 		for line in data_reader:
-			data_comp.append(float(line[4]))
+			data_comp.append([float(i) for i in line])
 
 	assert data == data_comp
