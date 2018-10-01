@@ -15,7 +15,7 @@ class Tracker:
 		self.watch_list = []
 		self.load_watch_list()
 		self.is_installed()
-		pass
+
 
 	def eod_update(self):
 		## for each stock, run its update procedure

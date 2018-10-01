@@ -26,14 +26,25 @@ class Updater:
 	def FetchNewData(self, last_date):
 		pass
 
-
 class FromBigCharts:#(Updater):
 	def __init__(self, code, last_date):
 		URL = 'http://bigcharts.marketwatch.com/quickchart/quickchart.asp?symb=AU%3A'
 		URL_END = '&insttype=Stock&freq=1&show=&time=8'
 
+		HISTORICAL_URL = 'http://bigcharts.marketwatch.com/historical/default.asp?symb=au%3A'
+		HISTORICAL_URL_MID = '&closeDate='
+		HISTORICAL_URL_END = '&x=37&y=26'
+
 		self.code = code
 		self.URL = URL + code + URL_END
+		self.HISTORICAL_URL = HISTORICAL_URL + self.code + HISTORICAL_URL_MID
+		self.HISTORICAL_URL_END = HISTORICAL_URL_END
+
+		## It doesn't feel right for the updater object to control last_date
+		## but at the moment retrieving the last date from file is
+		## relatively expensive, so this is the quickest option for now
+		## Ideally, the last date should be handed to the updater from the
+		## stock object every time FetchNewData is called
 		self.last_date = last_date
 
 	def FetchNewData(self):
@@ -69,13 +80,22 @@ class FromBigCharts:#(Updater):
 				month 	= int(next_date[4:6])
 				day 	= int(next_date[6:])
 
-				if dt.datetime(year,month,day).weekday()<5:
-					## Ignore weekends
-					data = self.FetchHistorical(next_date)
-					if data:
-						## Sometime weekdays won't have data i.e. public holidays
-						logger.info("Retrieved data for %s, %s", next_date, data)
-						new_data.append(data)
+				try:
+					if dt.datetime(year,month,day).weekday()<5:
+						## Ignore weekends
+						data = self.FetchHistorical(next_date)
+						
+						if data:
+							## Sometime weekdays won't have data i.e. public holidays
+							logger.info("Retrieved data for %s, %s", next_date, data)
+							
+							if data[-1] == 'n/a':
+								logger.info('Caught day with no trading')
+								data[-1] = 0
+							
+							new_data.append(data)
+				except:
+					logger.info("February problem caught")
 				
 				next_date = self.GetNextDate(next_date)
 
@@ -137,9 +157,7 @@ class FromBigCharts:#(Updater):
 
 	def FetchHistorical(self, date):
 		## Uses the historical page on Big Charts to get the data from a specific date
-		HISTORICAL_URL = 'http://bigcharts.marketwatch.com/historical/default.asp?symb=au%3A'
-		HISTORICAL_URL_MID = '&closeDate='
-		HISTORICAL_URL_END = '&x=37&y=26'
+		
 
 		logger = logging.getLogger(LOG)
 		try:
@@ -151,7 +169,7 @@ class FromBigCharts:#(Updater):
 			month 	= date[4:6]
 			day 	= date[6:]
 
-			hist_url = HISTORICAL_URL + self.code + HISTORICAL_URL_MID + month + '%2F' + day + '%2F' + year + HISTORICAL_URL_END
+			hist_url = self.HISTORICAL_URL + month + '%2F' + day + '%2F' + year + self.HISTORICAL_URL_END
 
 			response = requests.get(hist_url)
 			html = response.content
@@ -166,6 +184,8 @@ class FromBigCharts:#(Updater):
 		##=====================================================
 		## The next section is specific to the historical part of Big Charts
 		hist_data = []
+
+		## table could be empty if there is no data
 		if table:
 			temp_data = []
 			for row in table.findAll('tr'):
@@ -193,6 +213,8 @@ class FromBigCharts:#(Updater):
 	def GetNextDate(self,date):
 		## Takes a date as a string in the format YYYYMMDD
 		## Gives the next date assuming a max of 31 days and 12 months
+		## It would probably be much smarter to use a datetime increment
+		## but this works
 		year 	= int(date[:4])
 		month 	= int(date[4:6])
 		day 	= int(date[6:])
@@ -210,6 +232,8 @@ class FromBigCharts:#(Updater):
 
 class ForTesting(Updater):
 	## For testing only. Gets new data from /testing/fake_new_data/
+	## In the end, I haven't ended up using this, but it will be better 
+	## to make the testing totally determined and not dependent on the actual date
 	def __init__(self, code):
 		self.NEW = APP_PATH + 'fake_new_data/'
 

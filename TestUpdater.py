@@ -78,6 +78,6 @@ def testBigChartsUpdater():
 						['20180927', u'17.25', u'17.85', u'16.70', u'17.80', u'1846039'],
 						['20180928', u'17.95', u'18.50', u'17.82', u'17.95', u'2053325']]
 	retrieved_data = upd.FetchNewData()
-	assert retrieved_data[:-1] == multiple_dates
+	assert retrieved_data[:3] == multiple_dates
 
 

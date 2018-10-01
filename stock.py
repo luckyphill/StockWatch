@@ -26,28 +26,34 @@ class Stock:
 
 	def GetLastDate(self):
 		## Get the most recent date that we have data
+		## This will be slow and could sorely do with optimising
 		stockData = self.GetStockData()
-		return stockData[-1][0]
-
+		return str(stockData[-1][0])
 
 	def GetStockData(self):
 		## Loads the data from file
 		## Assumes that the data file is structured:
 		## date,open,high,low,close,volume
-
 		stockData = []
 		with open(self.DATA_FILE,'r') as csvfile:
 			data_reader = csv.reader(csvfile)
 			for line in data_reader:
-				stockData.append([float(i) for i in line])
+				## The line is date,open,high,low,close,volume
+				## date and volume shold be ints, the rest floats
+				stockData.append([line[0], float(line[1]), float(line[2]), float(line[3]), float(line[4]), int(line[5])])
 
 		return stockData
 
-
-
 	def GetNewData(self):
 		## This will get the latest data at a time controlled by Tracker
-		## Since it uses an Updater object, we don't care about the implementation
+		## The data is retrieved by an Updater object, then written to file
+
+		## Need to implement a check to see if the stock is brand new without any data
+		## in the DATA_PATH
+		## There are three cases: 
+		## 1. We have the data, but have ignored it (shouldn't happen with this implementation)
+		## 2. We don't have the data and the stock has existed for some time
+		## 3. We don't have the data because the stock has just floated
 		
 		new_data = self.updater.FetchNewData()
 		
@@ -57,19 +63,3 @@ class Stock:
 				data_writer = csv.writer(csvfile)
 				for row in new_data:
 					data_writer.writerow(row)
-
-
-
-	def eod_update(self):
-		## Manages all the updating procedures
-		pass
-
-	def get_latest_price(self):
-		## Accesses the designated website to get the end of day data
-
-		pass
-
-	def initialise_stock(self):
-		## Used when there is only raw data
-
-		pass

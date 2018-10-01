@@ -45,12 +45,19 @@ def testStockObjectSteps():
 
 	#=============================================================
 	## Check that data loads correctly
+	## Will only work if the test installation is completely fresh
 	data = st.GetStockData()
 
 	data_comp = []
 	with open(COMPARISON_TIME_SERIES_FILE,'r') as csvfile:
 		data_reader = csv.reader(csvfile)
 		for line in data_reader:
-			data_comp.append([float(i) for i in line])
+			data_comp.append([line[0]] + [float(i) for i in line[1:]])
 
-	assert data == data_comp
+	#assert data == data_comp
+
+	##============================================================
+	## Check that update works, and GetLastDate returns the correct date
+	st.GetNewData()
+	last_date = st.GetLastDate()
+	assert last_date == '20181001'
