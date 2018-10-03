@@ -13,23 +13,43 @@
 from global_vars import *
 import csv
 import stock
+import updater
 
 
 class Tracker:
 	def __init__(self, initial_watch_list):
 		self.watch_list = []
 		self.WATCH_LIST_FILE = initial_watch_list
-		self.is_installed()
+		self.stocks = {}
 
 	def GetWatchList(self):
 		## Loads the watch_list from file
+		logger = logging.getLogger(LOG)
 
 		watch_list = []
-		with open(self.WATCH_LIST_FILE,'r') as file:
-			data_reader = csv.reader(file)
-			watch_list = list(data_reader)
+		try:
+			with open(self.WATCH_LIST_FILE,'r') as file:
+				data_reader = csv.reader(file)
+				for entry in data_reader:
+					watch_list.append(entry[0])
+		except:
+			logger.error("Error with retrieving watch list")
+			raise Exception("Error with retrieving watch list")
 
+		logger.info("retrieved watch list from %s", self.WATCH_LIST_FILE)
 		return watch_list
+
+	def MakeStockDict(self):
+		watch_list = self.GetWatchList()
+
+		new_codes = []
+		for code in watch_list:
+			if code not in self.stocks:
+				self.stocks[code] = stock.Stock(code,updater.FromBigCharts)
+				new_codes.append(code)
+
+		
+
 
 	def eod_update(self):
 		## for each stock, run its update procedure

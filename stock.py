@@ -5,8 +5,8 @@
 ## This section is only needed for testing
 ## It should be deleted before running properly
 import sys
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 ##=====================================================
 
@@ -41,7 +41,7 @@ class Stock:
 			data_reader = csv.reader(csvfile)
 			for line in data_reader:
 				## The line is date,open,high,low,close,volume
-				## date and volume should be ints, the rest floats
+				## date should be a string, volume should be int, the rest floats
 				stockData.append([line[0], float(line[1]), float(line[2]), float(line[3]), float(line[4]), int(line[5])])
 
 		return stockData
