@@ -10,3 +10,4 @@ testing/logs/*
 testing/data/*
 testing/global_vars.py
 testing/all_codes.csv
+testing/raw_data_dates.csv

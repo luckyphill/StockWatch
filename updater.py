@@ -41,13 +41,6 @@ class FromBigCharts:#(Updater):
 		self.HISTORICAL_URL = HISTORICAL_URL + self.code + HISTORICAL_URL_MID
 		self.HISTORICAL_URL_END = HISTORICAL_URL_END
 
-		## It doesn't feel right for the updater object to control last_date
-		## but at the moment retrieving the last date from file is
-		## relatively expensive, so this is the quickest option for now
-		## Ideally, the last date should be handed to the updater from the
-		## stock object every time FetchNewData is called
-		#self.last_date = last_date
-
 	def FetchNewData(self, last_quote_date):
 		## Gets the all the missing data from BigCharts
 		## last_quote_date will be provided from Stock, which will get it
@@ -89,7 +82,7 @@ class FromBigCharts:#(Updater):
 						data = self.FetchHistorical(next_date)
 						
 						if data:
-							## Sometime weekdays won't have data i.e. public holidays
+							## Sometimes weekdays won't have data i.e. public holidays
 							logger.info("Retrieved data for %s, %s", next_date, data)
 							
 							if data[-1] == 'n/a':
@@ -157,6 +150,18 @@ class FromBigCharts:#(Updater):
 		return eod_data
 
 	def FetchHistorical(self, date):
+		## Decides which way to get historical data
+		## either from the web, or the raw data archive
+		new_data = False
+		raw_data_dates = self.GetRawDataDates()
+		if date in raw_data_dates:
+			new_data = self.FetchHistoricalFromRawData(date)
+		else:
+			new_data = self.FetchHistoricalFromBigCharts(date)
+
+		return new_data
+
+	def FetchHistoricalFromBigCharts(self, date):
 		## Uses the historical page on Big Charts to get the data from a specific date
 		
 
@@ -211,6 +216,34 @@ class FromBigCharts:#(Updater):
 
 		return hist_data
 
+	def FetchHistoricalFromRawData(self,date):
+		## Get the data from pre-downloaded archive data in RAW_PATH
+		## This will save querying BigCharts too much
+		## It shouldn't cause and issue for small amounts,
+		## but for lots of data it might get blocked with an IP ban for abusing the system
+		logger = logging.getLogger(LOG)
+
+		## In the data file are all stocks for that date,
+		## need to get the specific one we're after
+		data_file = RAW_PATH + date + '.txt'
+		logger.info("Retrieving data for %s from %s",self.code, data_file)
+
+		data = []
+
+		try:
+			with open(data_file,'r') as file:
+				data_reader = csv.reader(file)
+				for line in data_reader:
+					if line[0] == self.code:
+						data = line[1:]
+						break
+		except:
+			logger.info("Local historical data not found, need to retrieve from web")
+			data = False
+
+
+		return data
+
 	def GetNextDate(self,date):
 		## Takes a date as a string in the format YYYYMMDD
 		## Gives the next date assuming a max of 31 days and 12 months
@@ -230,6 +263,18 @@ class FromBigCharts:#(Updater):
 
 		new_date = str(year) + str(month).zfill(2) + str(day).zfill(2)
 		return new_date
+	
+	def GetRawDataDates(self):
+		## Looks in RAW_PATH and determines which dates we have data for
+		dates = []
+
+		with open(RAW_DATA_DATES_FILE, 'r') as file:
+			data_reader = csv.reader(file)
+			for entry in data_reader:
+				dates.append(entry[0])
+
+		return dates
+
 
 class ForTesting:
 	## For testing only. Gets new data from /testing/fake_new_data/
@@ -281,7 +326,7 @@ class ForTesting:
 						data = self.FetchData(next_date)
 						
 						if data:
-							## Sometime weekdays won't have data i.e. public holidays
+							## Sometimes weekdays won't have data i.e. public holidays
 							logger.info("Retrieved data for %s, %s", next_date, data)
 							
 							if data[-1] == 'n/a':

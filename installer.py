@@ -34,14 +34,16 @@ class Installer:
 		self.TIME_SERIES_FILE_NAME = 'time_series.csv'
 		self.RAW_DATA_REGEX_PATTERN = '\d{8}.txt'
 		self.GLOBAL_VARS_FILE_NAME = 'global_vars.py'
-
+		self.RAW_DATA_DATES_FILE_NAME = 'raw_data_dates.csv'
+		
+		self.RAW_DATA_DATES_FILE = self.PATH_TO_INSTALL_DIRECTORY + self.RAW_DATA_DATES_FILE_NAME
 		self.ALL_CODES_FILE = self.PATH_TO_INSTALL_DIRECTORY + self.ALL_CODES_FILE_NAME
 		self.GLOBAL_VARS_FILE = self.PATH_TO_INSTALL_DIRECTORY + self.GLOBAL_VARS_FILE_NAME
 		self.LOG_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'logs/'
 
 		
 		if not os.path.exists(self.LOG_PATH):
-				os.makedirs(self.LOG_PATH)
+			os.makedirs(self.LOG_PATH)
 		
 		self.initial_codes = []
 
@@ -98,6 +100,10 @@ class Installer:
 		self.WriteGlobalVariables()
 		logger.info("Global variables file written")
 
+		logger.info("Writing raw data dates file")
+		self.WriteRawDataDatesFile()
+		logger.info("Raw data dates file written")
+
 		logger.info("Installation complete")
 		
 	def GetInitialCodes(self):
@@ -149,6 +155,7 @@ class Installer:
 				for day in xrange(1,32):
 					dates.append(year * 10000 + month * 100 + day)
 
+		## This presumes the format of raw data is YYYYMMDD.txt - ought to generalise
 		for date in dates:
 			file_name = self.RAW_PATH + str(date) + ".txt"
 			if os.path.isfile(file_name):
@@ -177,6 +184,21 @@ class Installer:
 					writer.writerow(row)
 
 		logger.info("Data for %d codes successfully cleaned and written to file", len(stockPriceData))
+	
+	def WriteRawDataDatesFile(self):
+		## Writes a file that contains all the dates that are stored in RAW_PATH
+		## This is to speed up accessing the archive data
+		## The file will be updated by the Tacker object
+
+		regex = re.compile(self.RAW_DATA_REGEX_PATTERN)
+		dates = [f.split('.')[0] for f in os.listdir(self.RAW_PATH) if regex.match(f)]
+		ordered_dates = sorted(dates)
+
+		with open(self.RAW_DATA_DATES_FILE, 'w') as d_file:
+			for date in ordered_dates:
+				d_file.write(date + '\n')
+
+
 
 	def WriteGlobalVariables(self):
 		## Writes a file that will be used to track all the information about
@@ -184,7 +206,9 @@ class Installer:
 			gv_file.write("## Automatically generated file. Modifying may break the installation\n\n")
 			gv_file.write("APP_PATH 				= '%s'\n" % self.PATH_TO_INSTALL_DIRECTORY)
 			gv_file.write("DATA_PATH 				= '%s'\n" % self.DATA_PATH)
+			gv_file.write("RAW_PATH 				= '%s'\n" % self.RAW_PATH)
 			gv_file.write("ALL_CODES_FILE 			= '%s'\n" % self.ALL_CODES_FILE)
+			gv_file.write("RAW_DATA_DATES_FILE 	= '%s'\n" % self.RAW_DATA_DATES_FILE)
 			gv_file.write("LOG_FILE 				= '%slog_file.log'\n" % self.LOG_PATH)
 			gv_file.write("TIME_SERIES_FILE_NAME 	= '%s'\n" % self.TIME_SERIES_FILE_NAME)
 			gv_file.write("LOG 					= 'log_reference' # Just some name to put in the variable\n")

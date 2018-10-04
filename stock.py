@@ -49,13 +49,6 @@ class Stock:
 	def GetNewData(self):
 		## This will get the latest data at a time controlled by Tracker
 		## The data is retrieved by an Updater object, then written to file
-
-		## Need to implement a check to see if the stock is brand new without any data
-		## in the DATA_PATH
-		## There are three cases: 
-		## 1. We have the data, but have ignored it (shouldn't happen with this implementation)
-		## 2. We don't have the data and the stock has existed for some time
-		## 3. We don't have the data because the stock has just floated
 		
 		new_data = self.updater.FetchNewData(self.GetLastDate())
 		
