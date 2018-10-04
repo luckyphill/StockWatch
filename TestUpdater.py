@@ -9,8 +9,8 @@ import stock
 import installer
 import updater
 
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
+PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
+#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
 sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
@@ -92,6 +92,7 @@ class TestUpdater(object):
 							['20180927', u'17.25', u'17.85', u'16.70', u'17.80', u'1846039'],
 							['20180928', u'17.95', u'18.50', u'17.82', u'17.95', u'2053325']]
 		retrieved_data = upd.FetchNewData('20180925')
+		print retrieved_data
 		assert retrieved_data[:3] == multiple_dates
 
 	def test_BigChartsFromRawData(self):
@@ -113,7 +114,7 @@ class TestUpdater(object):
 		print no_data
 		assert no_data == False
 
-	def test_ForTestingUpdater(self):
+	def xtest_ForTestingUpdater(self):
 		upd = updater.ForTesting(TEST_CODE)
 
 		## Will only work on 20180929

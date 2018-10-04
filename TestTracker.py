@@ -11,8 +11,8 @@ import updater
 import tracker
 
 import sys
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
@@ -44,8 +44,14 @@ class TestTracker(object):
 
 	def test_MakeStockDict(self):
 		trk = tracker.Tracker(WATCH_LIST_FILE)
-		trk.MakeStockDict()
+		trk.UpdateStockDict()
 		stock_dict = trk.stocks
 		cmp_wl = ['APT', 'CBA', 'NAB', 'ANZ', 'TRS', 'IFL', 'BHP', 'CSL', 'AMP', 'WOW']
 		assert stock_dict.keys().sort() == cmp_wl.sort()
 
+	def test_UpdateArchive(self):
+		trk = tracker.Tracker(WATCH_LIST_FILE)
+		trk.UpdateArchive()
+		## Need to make some assert statements here
+
+	# def test_

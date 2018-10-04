@@ -12,8 +12,8 @@ import logging
 
 G_ALL_CODES_FILE = 'all_codes.csv'
 
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
+PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
+#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
 sys.path.insert(0, PATH_FOR_INSTALLER)  ## For importing the global_vars.py so it can be checked
 
 RAW_DATA = PATH_FOR_INSTALLER + 'raw_data/'

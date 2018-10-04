@@ -30,6 +30,7 @@ class Installer:
 		self.PATH_TO_INSTALL_DIRECTORY = path_inst_dir
 		self.RAW_PATH = path_raw_data
 		self.DATA_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'data/'
+		self.ZIP_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'zips/'
 		self.ALL_CODES_FILE_NAME = 'all_codes.csv'
 		self.TIME_SERIES_FILE_NAME = 'time_series.csv'
 		self.RAW_DATA_REGEX_PATTERN = '\d{8}.txt'
@@ -207,6 +208,7 @@ class Installer:
 			gv_file.write("APP_PATH 				= '%s'\n" % self.PATH_TO_INSTALL_DIRECTORY)
 			gv_file.write("DATA_PATH 				= '%s'\n" % self.DATA_PATH)
 			gv_file.write("RAW_PATH 				= '%s'\n" % self.RAW_PATH)
+			gv_file.write("ZIP_PATH 				= '%s'\n" % self.ZIP_PATH)
 			gv_file.write("ALL_CODES_FILE 			= '%s'\n" % self.ALL_CODES_FILE)
 			gv_file.write("RAW_DATA_DATES_FILE 	= '%s'\n" % self.RAW_DATA_DATES_FILE)
 			gv_file.write("LOG_FILE 				= '%slog_file.log'\n" % self.LOG_PATH)

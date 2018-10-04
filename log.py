@@ -1,10 +1,8 @@
 import logging
 import logging.handlers
 
-## UNSOLVED ISSUE: The FileHandler doesn't recognise the absolute path
-## It works when the relative path is given, and it works with the relative path
-## when it's handeled directly by Installer.py but not in here...
-
+## Setup the logger so that it can be used in the global_vars file
+## This will make it easier and more clean to have all modules log to the same file
 def setup_custom_logger(name,path):
 
 	logger = logging.getLogger(name)

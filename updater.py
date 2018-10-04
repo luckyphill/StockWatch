@@ -36,6 +36,8 @@ class FromBigCharts:#(Updater):
 		HISTORICAL_URL_MID = '&closeDate='
 		HISTORICAL_URL_END = '&x=37&y=26'
 
+		self.MAX_YEARS_AGO_FOR_SCRAPING = 2
+
 		self.code = code
 		self.URL = URL + code + URL_END
 		self.HISTORICAL_URL = HISTORICAL_URL + self.code + HISTORICAL_URL_MID
@@ -70,29 +72,41 @@ class FromBigCharts:#(Updater):
 			## then we need to make sure the data in between exists
 			## This while loop will always be triggered on a Monday so
 			## need to skip the data fetching if next_date is a weekend
+
+			## It looks back an arbitrary amount of time backwards
+			## but it only grabs data from the web if it won't end up
+			## grabbing more than MAX_YEARS_AGO_FOR_SCRAPING worth of data
+			## If it's older than that, only looks in the archives
 			logger.info("Checking for other missing dates")
 			while next_date < most_recent_date:
 				year 	= int(next_date[:4])
 				month 	= int(next_date[4:6])
 				day 	= int(next_date[6:])
 
-				try:
-					if dt.datetime(year,month,day).weekday()<5:
-						## Ignore weekends
-						data = self.FetchHistorical(next_date)
+				dt_next_date = dt.date(year,month,day)
+
+				if dt_next_date.weekday()<5:
+					## Ignore weekends
+					try:
+						max_years_ago = dt.date.today() - dt.timedelta(days = 365 * self.MAX_YEARS_AGO_FOR_SCRAPING) 
 						
-						if data:
-							## Sometimes weekdays won't have data i.e. public holidays
-							logger.info("Retrieved data for %s, %s", next_date, data)
+						if  dt_next_date > max_years_ago:
+							## Date is not more than MAX_YEARS_AGO_FOR_SCRAPING so can get from BigCharts	
+							data = self.FetchHistorical(next_date)
 							
-							if data[-1] == 'n/a':
-								logger.info('Caught day with no trading')
-								data[-1] = 0
-							
-							new_data.append(data)
-				except:
-					logger.info("February problem caught")
-				
+							if data:
+								logger.info("Retrieved data for %s, %s", next_date, data)
+								new_data.append(data)
+						else:
+							## If it is too far long ago, then restrict to archives
+							data = self.FetchHistoricalFromRawData(next_date)
+							if data:
+								logger.info("Retrieved data for %s, %s", next_date, data)
+								new_data.append(data)
+					except:
+						## Date doesn't exist
+						logger.info("February problem caught")
+					
 				next_date = self.GetNextDate(next_date)
 
 
@@ -154,8 +168,14 @@ class FromBigCharts:#(Updater):
 		## either from the web, or the raw data archive
 		new_data = False
 		raw_data_dates = self.GetRawDataDates()
+		
 		if date in raw_data_dates:
 			new_data = self.FetchHistoricalFromRawData(date)
+			if not new_data:
+				## Stock wasn't found in the archive data
+				## This could be because it's not part of the archive - check online
+				## or because it wasn't around at the date in question - it won't be online either
+				new_data = self.FetchHistoricalFromBigCharts(date)
 		else:
 			new_data = self.FetchHistoricalFromBigCharts(date)
 
@@ -166,17 +186,16 @@ class FromBigCharts:#(Updater):
 		
 
 		logger = logging.getLogger(LOG)
+		date = str(date)
+		logger.info("Retrieving data from %s", date)
+
+		year 	= date[:4]
+		month 	= date[4:6]
+		day 	= date[6:]
+
+		hist_url = self.HISTORICAL_URL + month + '%2F' + day + '%2F' + year + self.HISTORICAL_URL_END
+		
 		try:
-
-			date = str(date)
-			logger.info("Retrieving data from %s", date)
-
-			year 	= date[:4]
-			month 	= date[4:6]
-			day 	= date[6:]
-
-			hist_url = self.HISTORICAL_URL + month + '%2F' + day + '%2F' + year + self.HISTORICAL_URL_END
-
 			response = requests.get(hist_url)
 			html = response.content
 			soup = BeautifulSoup(html, "xml")
@@ -210,6 +229,9 @@ class FromBigCharts:#(Updater):
 			hist_data = [date, open_p, high, low, close, vol]
 
 			logger.info("Retrieval complete for %s", date)
+			if hist_data[-1] == 'n/a':
+				logger.info('Caught day with no trading, fixing volume column')
+				hist_data[-1] = 0
 		else:
 			hist_data = False
 			logger.info("No data on %s", date)
@@ -219,7 +241,7 @@ class FromBigCharts:#(Updater):
 	def FetchHistoricalFromRawData(self,date):
 		## Get the data from pre-downloaded archive data in RAW_PATH
 		## This will save querying BigCharts too much
-		## It shouldn't cause and issue for small amounts,
+		## It shouldn't cause an issue for small amounts,
 		## but for lots of data it might get blocked with an IP ban for abusing the system
 		logger = logging.getLogger(LOG)
 
