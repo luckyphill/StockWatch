@@ -5,8 +5,8 @@
 ## This section is only needed for testing
 ## It should be deleted before running properly
 import sys
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 ##=====================================================
 

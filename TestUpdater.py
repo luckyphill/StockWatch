@@ -9,8 +9,8 @@ import stock
 import installer
 import updater
 
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
 sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
@@ -71,7 +71,7 @@ class TestUpdater(object):
 		## Gets correct historical data for APT
 		old_data = upd.FetchHistorical('20180906')
 		print old_data
-		assert old_data == ['20180906', '16.52', '16.58', '15.32','16.00', '3844401']
+		assert old_data == ['20180906', '16.52', '16.58', '15.32','16', '3844401']
 
 		## Returns False for days with no trading
 		no_data = upd.FetchHistorical('20180908')
@@ -88,9 +88,9 @@ class TestUpdater(object):
 		## It will grab everything up to today, but will only test the three dates below
 		upd = updater.FromBigCharts(TEST_CODE)
 
-		multiple_dates = [ ['20180926', u'16.24', u'17.00', u'16.16', u'16.97', u'1524296'],
-							['20180927', u'17.25', u'17.85', u'16.70', u'17.80', u'1846039'],
-							['20180928', u'17.95', u'18.50', u'17.82', u'17.95', u'2053325']]
+		multiple_dates = [ ['20180926', u'16.24', u'17', u'16.16', u'16.97', u'1524296'],
+							['20180927', u'17.25', u'17.85', u'16.7', u'17.8', u'1846039'],
+							['20180928', u'17.95', u'18.5', u'17.82', u'17.95', u'2053325']]
 		retrieved_data = upd.FetchNewData('20180925')
 		print retrieved_data
 		assert retrieved_data[:3] == multiple_dates

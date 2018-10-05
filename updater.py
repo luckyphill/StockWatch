@@ -44,9 +44,10 @@ class FromBigCharts:#(Updater):
 		self.HISTORICAL_URL_END = HISTORICAL_URL_END
 
 	def FetchNewData(self, last_quote_date):
-		## Gets the all the missing data from BigCharts
+		## Gets the all the missing data from BigCharts or archives
 		## last_quote_date will be provided from Stock, which will get it
-		## directly from the file.
+		## directly from the file. This is the most recent data that exists
+		## in data file
 		logger = logging.getLogger(LOG)
 		logger.info("Getting new data for %s", self.code)
 
@@ -58,6 +59,7 @@ class FromBigCharts:#(Updater):
 		if last_quote_date == today: # make sure we haven't already got today's data
 			
 			logger.info("Data appears to be up to date.")
+			new_data = False
 		
 		elif last_quote_date < today: # make sure we're adding the next date
 			logger.info("Getting missing data")
@@ -73,44 +75,57 @@ class FromBigCharts:#(Updater):
 			## This while loop will always be triggered on a Monday so
 			## need to skip the data fetching if next_date is a weekend
 
-			## It looks back an arbitrary amount of time backwards
+			## It can look back an arbitrary amount of time backwards
 			## but it only grabs data from the web if it won't end up
 			## grabbing more than MAX_YEARS_AGO_FOR_SCRAPING worth of data
 			## If it's older than that, only looks in the archives
+			## This might mean that data is missed if it is available
+			## on the web not not in the archive
 			logger.info("Checking for other missing dates")
 			while next_date < most_recent_date:
 				year 	= int(next_date[:4])
 				month 	= int(next_date[4:6])
 				day 	= int(next_date[6:])
 
-				dt_next_date = dt.date(year,month,day)
+				try:
+					## This put in a try statement because GetNextDate is a simplified date checker
+					## and it always assumes 29 days in Feb, therefore dt.date will throw an exception
+					## since the date doesn't exist every year
+					dt_next_date = dt.date(year,month,day)
 
-				if dt_next_date.weekday()<5:
-					## Ignore weekends
-					try:
+					## If is is a weekday, then retrieve the data
+					if dt_next_date.weekday()<5:				
 						max_years_ago = dt.date.today() - dt.timedelta(days = 365 * self.MAX_YEARS_AGO_FOR_SCRAPING) 
 						
+						## Date is not more than MAX_YEARS_AGO_FOR_SCRAPING so can get from BigCharts
+						## Else if it is too far long ago, then restrict to archives
 						if  dt_next_date > max_years_ago:
-							## Date is not more than MAX_YEARS_AGO_FOR_SCRAPING so can get from BigCharts	
 							data = self.FetchHistorical(next_date)
-							
-							if data:
-								logger.info("Retrieved data for %s, %s", next_date, data)
-								new_data.append(data)
 						else:
-							## If it is too far long ago, then restrict to archives
 							data = self.FetchHistoricalFromRawData(next_date)
-							if data:
-								logger.info("Retrieved data for %s, %s", next_date, data)
-								new_data.append(data)
-					except:
-						## Date doesn't exist
-						logger.info("February problem caught")
+
+						## If any data was retrieved, add it to new_data
+						if data:
+							logger.info("Retrieved data for %s, %s", next_date, data)
+							new_data.append(data)
+				except:
+					## Date doesn't exist
+					logger.info("February problem caught")
 					
 				next_date = self.GetNextDate(next_date)
 
 
 			new_data.append(most_recent)
+
+			## Add in a check to make sure the BigCharts bug hasn't happened
+			## If it has, delete the data to preserve the accuracy of the stored data
+			try:
+				assert new_data[-1][1:5] != new_data[-2][1:5]
+			except:
+				logger.error("BigCharts time difference bug encountered for %s on %s. Removed the offending data." self.code, most_recent_date)
+				## Remove the last two lines of data
+				del new_data[-1]
+				del new_data[-1]
 
 		else:
 			logger.error("Something has gone wrong, we appear to be adding old data for " + self.code)
@@ -123,6 +138,9 @@ class FromBigCharts:#(Updater):
 		## This attempts to get the most recent data
 
 		logger = logging.getLogger(LOG)
+
+		## In a try statement because downloading from the internet.
+		## There could be any number of reasons why it could fail
 		try:
 
 			logger.info("Retrieving most recent data from %s",self.URL)

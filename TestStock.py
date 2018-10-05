@@ -56,4 +56,4 @@ class TestStock(object):
 		st = stock.Stock(TEST_CODE, updater.FromBigCharts)
 		st.GetNewData()
 		last_date = st.GetLastDate()
-		assert last_date == '20181004'
+		assert last_date == '20181005'

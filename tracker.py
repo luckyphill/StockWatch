@@ -10,6 +10,10 @@
 ## I imagine it will be possible to have multiple trackers running with different watch lists, but I don't see why this should happen
 ## Perhaps running this as a singleton would be a good idea
 
+import sys
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 import csv
 import stock
@@ -58,9 +62,12 @@ class Tracker:
 
 	def EoDUpdate(self):
 		## Updates each stock with the latest data
+		## If using BigCharts, this has to run after at least 4pm because the historical
+		## feature has a bug where yesterdays historical data actually shows todays data,
+		## most likely due to a time difference between here and the US
 		self.UpdateStockDict()
 
-		for stock in self.stocks:
+		for code,stock in self.stocks.iteritems():
 			stock.GetNewData()
 
 	def UpdateArchive(self):
@@ -80,6 +87,7 @@ class Tracker:
 
 		if not os.path.isfile(save_file):
 			try:
+				## Downloading from web, must put int a try statement
 				logger.info("Downloading historical data from %s", online_file)
 				urllib.urlretrieve (online_file, save_file)
 
@@ -89,24 +97,33 @@ class Tracker:
 
 			logger.info("Download successful")
 
-			zip_ref = zipfile.ZipFile(save_file, 'r')
+			try:
+				## This fails when there is no data matching the format
+				## The downlod location returns html
+				zip_ref = zipfile.ZipFile(save_file, 'r')
+				logger.info("Unzipping archive data")
+				zip_ref.extractall(ZIP_PATH)
+				zip_ref.close()
 
-			logger.info("Unzipping archive data")
-			zip_ref.extractall(ZIP_PATH)
-			zip_ref.close()
+				logger.info("Extraction successful")
 
-			logger.info("Extraction successful")
+				for file in os.listdir(extracted_location):
+					file_to_move = extracted_location + file
+					move_to_file = RAW_PATH + file
+					shutil.move(file_to_move, move_to_file)
 
-			for file in os.listdir(extracted_location):
-				file_to_move = extracted_location + file
-				move_to_file = RAW_PATH + file
-				shutil.move(file_to_move, move_to_file)
+				os.rmdir(extracted_location)
+				logger.info("Moving successful")
 
-			os.rmdir(extracted_location)
-			logger.info("Moving successful")
+			except:
+				log.warning("The downloaded file could not be extracted. This may be due to the the file not existing on the web, so it returns an html file")
+
+		else:
+			logger.info("Archive data already exists")
 
 	def GetSignals(self):
 		## For each stock, looks for signals
+		
 		pass
 
 	def Notification(self):
