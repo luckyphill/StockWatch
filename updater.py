@@ -122,7 +122,7 @@ class FromBigCharts:#(Updater):
 			try:
 				assert new_data[-1][1:5] != new_data[-2][1:5]
 			except:
-				logger.error("BigCharts time difference bug encountered for %s on %s. Removed the offending data." self.code, most_recent_date)
+				logger.error("BigCharts time difference bug encountered for %s on %s. Removed the offending data.", self.code, most_recent_date)
 				## Remove the last two lines of data
 				del new_data[-1]
 				del new_data[-1]

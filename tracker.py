@@ -123,7 +123,10 @@ class Tracker:
 
 	def GetSignals(self):
 		## For each stock, looks for signals
-		
+		## Need to plan how this will work
+		for code,stock in self.stocks.iteritems():
+			pass
+
 		pass
 
 	def Notification(self):

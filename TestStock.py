@@ -9,8 +9,8 @@ import stock
 import installer
 import updater
 
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
+PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
+#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
 sys.path.insert(0, PATH_FOR_INSTALLER)
 global_vars_file = PATH_FOR_INSTALLER + 'global_vars.py'
 assert os.path.isfile(global_vars_file)
@@ -56,4 +56,4 @@ class TestStock(object):
 		st = stock.Stock(TEST_CODE, updater.FromBigCharts)
 		st.GetNewData()
 		last_date = st.GetLastDate()
-		assert last_date == '20181005'
+		assert last_date == '20181009'

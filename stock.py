@@ -5,8 +5,8 @@
 ## This section is only needed for testing
 ## It should be deleted before running properly
 import sys
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 ##=====================================================
 
@@ -33,19 +33,24 @@ class Stock:
 		stockData = tail(self.DATA_FILE).split(',')
 		return str(stockData[0])
 
-	def GetStockData(self,days=False):
+	def GetStockData(self,days=-1):
 		## Loads the data from file
 		## Assumes that the data file is structured:
 		## date,open,high,low,close,volume
 		stockData = []
 		
 		if os.path.isfile(self.DATA_FILE):
-			with open(self.DATA_FILE,'r') as csvfile:
-				data_reader = csv.reader(csvfile)
-				for line in data_reader:
-					## The line is date,open,high,low,close,volume
-					## date should be a string, volume should be int, the rest floats
-					stockData.append([line[0], float(line[1]), float(line[2]), float(line[3]), float(line[4]), int(line[5])])
+			if days == -1:
+			## If no number of days specified, assume all data is requested
+			
+				with open(self.DATA_FILE,'r') as csvfile:
+					data_reader = csv.reader(csvfile)
+					for line in data_reader:
+						## The line is date,open,high,low,close,volume
+						## date should be a string, volume should be int, the rest floats
+						stockData.append([line[0], float(line[1]), float(line[2]), float(line[3]), float(line[4]), int(line[5])])
+			else:
+				stockData = tail(self.DATA_FILE, days).split(',')
 
 		return stockData
 
