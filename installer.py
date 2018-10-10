@@ -212,12 +212,15 @@ class Installer:
 			gv_file.write("ALL_CODES_FILE 			= '%s'\n" % self.ALL_CODES_FILE)
 			gv_file.write("RAW_DATA_DATES_FILE 	= '%s'\n" % self.RAW_DATA_DATES_FILE)
 			gv_file.write("LOG_FILE 				= '%slog_file.log'\n" % self.LOG_PATH)
+			gv_file.write("SIGLOG_FILE 			= '%ssig_log.log'\n" % self.LOG_PATH)
 			gv_file.write("TIME_SERIES_FILE_NAME 	= '%s'\n" % self.TIME_SERIES_FILE_NAME)
 			gv_file.write("LOG 					= 'log_reference' # Just some name to put in the variable\n")
+			gv_file.write("SIGLOG 					= 'siglog' # Just some name to put in the variable\n")
 			gv_file.write('\n#=================================================\n\n')
 			gv_file.write("## Creating the global logger\n")
 			gv_file.write('import logging\nimport log\n')
 			gv_file.write("log.setup_custom_logger(LOG, LOG_FILE)\n")
+			gv_file.write("log.setup_custom_logger(SIGLOG, SIGLOG_FILE)\n")
 
 class Uninstaller:
 	def __init__(self, path_inst_dir):

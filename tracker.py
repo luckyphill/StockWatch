@@ -16,12 +16,17 @@ PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 import csv
+
 import stock
 import updater
+import signals
+import message
+
 import os
 import urllib
 import zipfile
 import shutil
+
 
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR
@@ -124,10 +129,14 @@ class Tracker:
 	def GetSignals(self):
 		## For each stock, looks for signals
 		## Need to plan how this will work
+		signaler = signals.Signals()
 		for code,stock in self.stocks.iteritems():
-			pass
-
-		pass
+			msgs = signaler.CheckForSignals(stock)
+			if msgs:
+				multi_line = ''
+				for msg in msgs:
+					multi_line = multi_line + '\n' + msg
+				message.popupmsg(stock, multi_line)
 
 	def Notification(self):
 		## Notifies the user of a signal

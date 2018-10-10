@@ -12,3 +12,5 @@ testing/zips/*
 testing/global_vars.py
 testing/all_codes.csv
 testing/raw_data_dates.csv
+get-pip.py
+plot_popup.py

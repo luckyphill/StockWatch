@@ -6,6 +6,8 @@ import tracker
 import stock
 import updater
 
+import datetime as dt
+import time
 import sys
 #PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
 PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
@@ -32,6 +34,7 @@ while(True):
 		## There is a bug on the BigCharts website where yesterday's data
 		## appears as todays data due to time difference.
 		trk.EoDUpdate()
+		trk.GetSignals()
 		checked_date = date
 	
 	if day == 0 and hour > 14 and dl_checked_date < date:

@@ -12,12 +12,14 @@ import tracker
 import signals
 
 import sys
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
-TEST_CODE = 'APT'
+import message
+
+TEST_CODE = 'CSL'
 
 class TestSignals(object):
 
@@ -37,3 +39,10 @@ class TestSignals(object):
 		Low = sig.PeriodLow(stk, 100)
 
 		assert(Low == False)
+
+	def test_Popup(self):
+		stk = stock.Stock(TEST_CODE,updater.FromBigCharts)
+		msg = 'testy test\ntesty test'
+
+		message.popupmsg(stk,msg)
+

@@ -5,8 +5,8 @@
 ## This section is only needed for testing
 ## It should be deleted before running properly
 import sys
-PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-#PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
 sys.path.insert(0, PATH_FOR_INSTALLER)
 ##=====================================================
 
@@ -37,12 +37,13 @@ class Stock:
 		## Loads the data from file
 		## Assumes that the data file is structured:
 		## date,open,high,low,close,volume
+		logger = logging.getLogger(LOG)
 		stockData = []
 		
 		if os.path.isfile(self.DATA_FILE):
 			if days == -1:
 			## If no number of days specified, assume all data is requested
-			
+				logger.info("Getting all data for %s", self.code)
 				with open(self.DATA_FILE,'r') as csvfile:
 					data_reader = csv.reader(csvfile)
 					for line in data_reader:
@@ -50,7 +51,19 @@ class Stock:
 						## date should be a string, volume should be int, the rest floats
 						stockData.append([line[0], float(line[1]), float(line[2]), float(line[3]), float(line[4]), int(line[5])])
 			else:
-				stockData = tail(self.DATA_FILE, days).split(',')
+				logger.info("Getting last %d days data for %s", days, self.code)
+				temp_stockData = tail(self.DATA_FILE, days).split('\n')
+				
+				## Sometimes tail ends in the middle of a line, need to catch this case
+				first_line = temp_stockData[0].split(',')
+				if len(first_line) != 6:
+					if len(first_line[0]) != 8:
+						logger.info("Caught the tail.py issue where it ends in the middle of a line")
+						del temp_stockData[0]
+
+				for data in temp_stockData:
+					line = data.split(',')
+					stockData.append([line[0], float(line[1]), float(line[2]), float(line[3]), float(line[4]), int(line[5])])
 
 		return stockData
 
