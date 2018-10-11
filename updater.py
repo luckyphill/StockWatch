@@ -125,6 +125,7 @@ class FromBigCharts:#(Updater):
 							if next_date in raw_data_dates:
 								data = self.FetchHistoricalFromRawData(next_date)
 							else:
+								logger.info("The date %s is not in the archive", next_date)
 								data = False
 
 						## If any data was retrieved, add it to new_data
@@ -141,7 +142,7 @@ class FromBigCharts:#(Updater):
 			logger.info("All missing data retrieved for %s on %s, validating", self.code, today)
 			new_data.append(most_recent)
 
-			## Sometimes BigCharts gives todays data as yesterdays data
+			## Sometimes BigCharts puts today's data as yesterday's data
 			## This is due to a time zone issue which can be grabbed in the first instance by the update scheduler
 			## However the exact nature of the bug is no clear, so
 			## add in a check to make sure the BigCharts bug hasn't happened
@@ -149,7 +150,7 @@ class FromBigCharts:#(Updater):
 			if len(new_data) > 1:
 				## The following check will be triggered when there is no trading today and/or yesterday
 				## so need to account for this case
-				if new_data[-1][-1] != 0 or new_data[-2][-1] !=0:
+				if new_data[-1][-1] != 0 and new_data[-2][-1] !=0:
 					try:
 						assert new_data[-1][1:5] != new_data[-2][1:5]
 					except:
