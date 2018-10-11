@@ -1,9 +1,7 @@
 
 import sys
 import stock
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
-sys.path.insert(0, PATH_FOR_INSTALLER)
+
 from global_vars import *
 
 
@@ -52,7 +50,7 @@ class Signals:
 		logger = logging.getLogger(SIGLOG)
 		sigs = []
 		## Do we have a n-period break out?
-		if self.PeriodHigh(stock,100):
+		if self.PeriodHigh(stock,150):
 			message = stock.code + " has closed higher than the previous 150 days of trading"
 			logger.info("%s has closed higher than the previous 150 days of trading", stock.code)
 			sigs.append(message)

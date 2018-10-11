@@ -1,14 +1,14 @@
 ## The stock object
 ## Should do all the handling of actual stock data
 
-##=====================================================
-## This section is only needed for testing
-## It should be deleted before running properly
-import sys
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
-sys.path.insert(0, PATH_FOR_INSTALLER)
-##=====================================================
+# ##=====================================================
+# ## This section is only needed for testing
+# ## It should be deleted before running properly
+# import sys
+# #PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
+# PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
+# sys.path.insert(0, PATH_FOR_INSTALLER)
+# ##=====================================================
 
 import os
 import csv
@@ -19,8 +19,13 @@ from global_vars import *
 class Stock:
 	def __init__(self, code, updater_object):
 		self.code = code
-		self.DIRECTORY = DATA_PATH + code +'/'
+		self.DIRECTORY = STOCK_PATH + code +'/'
 		self.DATA_FILE = self.DIRECTORY + TIME_SERIES_FILE_NAME
+
+		logger = logging.getLogger(LOG)
+		if not os.path.exists(self.DIRECTORY):
+			logger.info("Directory for %s does not exist. Creating now", self.code)
+			os.makedirs(self.DIRECTORY)
 
 		self.updater = updater_object(code)
 		## Declaring the object
@@ -71,6 +76,7 @@ class Stock:
 		## This will get the latest data at a time controlled by Tracker
 		## The data is retrieved by an Updater object, then written to file
 
+		logger = logging.getLogger(LOG)
 		if os.path.isfile(self.DATA_FILE):
 			new_data = self.updater.FetchNewData(self.GetLastDate())
 		else:
@@ -83,7 +89,11 @@ class Stock:
 		
 		## new_data is either a list with the new data or bool False
 		if new_data:
+			logger.info("Writing %d new line(s) to file for %s", len(new_data), self.code )
 			with open(self.DATA_FILE,'a') as csvfile:
 				data_writer = csv.writer(csvfile)
 				for row in new_data:
 					data_writer.writerow(row)
+		else:
+			logger.info("No new data available for %s", self.code)
+

@@ -30,7 +30,8 @@ class Installer:
 		self.PATH_TO_INSTALL_DIRECTORY = path_inst_dir
 		self.RAW_PATH = path_raw_data
 		self.DATA_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'data/'
-		self.ZIP_PATH = self.PATH_TO_INSTALL_DIRECTORY + 'zips/'
+		self.ZIP_PATH = self.DATA_PATH + 'zips/'
+		self.STOCK_PATH = self.DATA_PATH + 'stock_data/'
 		self.ALL_CODES_FILE_NAME = 'all_codes.csv'
 		self.TIME_SERIES_FILE_NAME = 'time_series.csv'
 		self.RAW_DATA_REGEX_PATTERN = '\d{8}.txt'
@@ -172,8 +173,8 @@ class Installer:
 		logger.info('Data from %d to %d read from file', self.EARLIEST_YEAR, latestYear)
 
 		for code in stockPriceData:
-			## File structure: /StockWatch/data/CODE/
-			code_path = self.DATA_PATH + code +"/"
+			## File structure: /StockWatch/data/stock_data/CODE/
+			code_path = self.STOCK_PATH + code +"/"
 			
 			if not os.path.exists(code_path):
 				os.makedirs(code_path)
@@ -209,6 +210,7 @@ class Installer:
 			gv_file.write("DATA_PATH 				= '%s'\n" % self.DATA_PATH)
 			gv_file.write("RAW_PATH 				= '%s'\n" % self.RAW_PATH)
 			gv_file.write("ZIP_PATH 				= '%s'\n" % self.ZIP_PATH)
+			gv_file.write("STOCK_PATH 				= '%s'\n" % self.STOCK_PATH)
 			gv_file.write("ALL_CODES_FILE 			= '%s'\n" % self.ALL_CODES_FILE)
 			gv_file.write("RAW_DATA_DATES_FILE 	= '%s'\n" % self.RAW_DATA_DATES_FILE)
 			gv_file.write("LOG_FILE 				= '%slog_file.log'\n" % self.LOG_PATH)

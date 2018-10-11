@@ -1,0 +1,31 @@
+To get StockWatch running:
+
+Modify the InstallStockWatch.py file to match your directory
+
+i.e.
+inst = installer.Installer('/absolute/path/to/StockWatch/', '/absolute/path/to/raw_data/', earliest_year_you_want_in_your_data_folder)
+
+Then run this with
+
+python InstallStockWatch.py
+
+It has some basic error catching.
+
+Then get it running with supervisord
+
+When it is running, it will check the file watch_list.csv for stocks that you are interested in, then update the eod data regularly
+If it detects a signal of interest, it will produce a pop up notification with a price chart
+
+
+supervisor.conf needs to be placed in one of these:
+
+/usr/local/share/supervisor/supervisord.conf
+Other options are
+/usr/local/share/etc/supervisord.conf
+/usr/local/share/supervisord.conf
+
+to start StockWatch with supervisord use:
+supervisord -c /usr/local/share/supervisor/supervisord.conf
+or the path to where you stored it
+
+TODO: Integrate this into the install procedure

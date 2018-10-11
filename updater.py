@@ -66,7 +66,25 @@ class FromBigCharts:#(Updater):
 			logger.info("Fetching most recent data for date %s", today)
 			
 			most_recent = self.FetchMostRecent()
+
+			if most_recent == False:
+				## Something has gone wrong with retrieval of todays data
+				## This could happen if BigCharts doesn't list the stock
+				## It could also happen if the website fails to load (i.e. no internet connection)
+				## In this case the best approach is to abort the FetchNewData method
+				logger.info("Data not retrieved for %s", self.code)
+				return False
+
 			most_recent_date = most_recent[0]
+
+			if most_recent_date == last_quote_date:
+				## Sometime BigCharts doesn't give an entry for today if there was no trading
+				## It just shows the most recent actual trading day
+				## So, if that data is already stored, we don't need it
+				logger.info("We already have data for this date, discarding.")
+				return False
+
+			logger.info("Today's data received %s",most_recent)
 
 			next_date = self.GetNextDate(last_quote_date)
 
@@ -99,10 +117,15 @@ class FromBigCharts:#(Updater):
 						
 						## Date is not more than MAX_YEARS_AGO_FOR_SCRAPING so can get from BigCharts
 						## Else if it is too far long ago, then restrict to archives
+						logger.info("Searching for data for %s on %s", self.code, next_date)
 						if  dt_next_date > max_years_ago:
 							data = self.FetchHistorical(next_date)
 						else:
-							data = self.FetchHistoricalFromRawData(next_date)
+							raw_data_dates = self.GetRawDataDates()
+							if next_date in raw_data_dates:
+								data = self.FetchHistoricalFromRawData(next_date)
+							else:
+								data = False
 
 						## If any data was retrieved, add it to new_data
 						if data:
@@ -115,23 +138,31 @@ class FromBigCharts:#(Updater):
 				next_date = self.GetNextDate(next_date)
 
 
+			logger.info("All missing data retrieved for %s on %s, validating", self.code, today)
 			new_data.append(most_recent)
 
-			## Add in a check to make sure the BigCharts bug hasn't happened
+			## Sometimes BigCharts gives todays data as yesterdays data
+			## This is due to a time zone issue which can be grabbed in the first instance by the update scheduler
+			## However the exact nature of the bug is no clear, so
+			## add in a check to make sure the BigCharts bug hasn't happened
 			## If it has, delete the data to preserve the accuracy of the stored data
-			try:
-				assert new_data[-1][1:5] != new_data[-2][1:5]
-			except:
-				logger.error("BigCharts time difference bug encountered for %s on %s. Removed the offending data.", self.code, most_recent_date)
-				## Remove the last two lines of data
-				del new_data[-1]
-				del new_data[-1]
+			if len(new_data) > 1:
+				## The following check will be triggered when there is no trading today and/or yesterday
+				## so need to account for this case
+				if new_data[-1][-1] != 0 or new_data[-2][-1] !=0:
+					try:
+						assert new_data[-1][1:5] != new_data[-2][1:5]
+					except:
+						logger.error("BigCharts time difference bug encountered for %s on %s. Removed the offending data.", self.code, most_recent_date)
+						## Remove the last two lines of data
+						del new_data[-2:]
 
 		else:
 			logger.error("Something has gone wrong, we appear to be adding old data for " + self.code)
 			raise Exception("Something has gone wrong, we appear to be adding old data for " + self.code)
 			return False
 
+		logger.info("Data retrieval complete.")
 		return new_data
 
 	def FetchMostRecent(self):
@@ -155,35 +186,54 @@ class FromBigCharts:#(Updater):
 			raise Exception("There was an issue retrieving EoD data for " + self.code + ", check that lxml is installed.")
 			return False
 
-		##=====================================================
-		## The next section is specific to this website
-		temp_data = []
-		for row in table.findAll('tr'):
-			for cell in row.findAll('td'):
-				temp_data.append(cell.text)
+
+		if table == None:
+			## No data available on BigCharts, need to look elsewhere
+			logger.info("BigCharts does not have data for %s", self.code)
+			return False
+		else:
+			##=====================================================
+			## The next section is specific to this website
+			temp_data = []
+			for row in table.findAll('tr'):
+				for cell in row.findAll('td'):
+					temp_data.append(cell.text)
+			
+			# clean the data according to how the website presented it
+			date = temp_data[1].split(' ')[0]
+			open_p = temp_data[9].split('\n')[2]
+			high = temp_data[10].split('\n')[2]
+			low = temp_data[11].split('\n')[2]
+			close = temp_data[7].split('\n')[2]
+			vol = temp_data[12].split('\n')[2].replace(',', '')
+
+			[month,day,year] = date.split('/')
+			proper_date = year + month.zfill(2) + day.zfill(2)
+
+			
+
+			logger.info("Retrieval complete, validating.")
+
+			## If there has been no trading today, then BigCharts displays 'n\a' in the open high and low columns
+			if open_p == 'n/a':
+				## Cleaning the data to get rid of 'n/a'
+				logger.info("Caught the no-trading-n/a issue.")
+				eod_data = [proper_date, close, close, close, close, vol]
+
+			else:
+				## Everything has worked properly
+				eod_data = [proper_date, open_p, high, low, close, vol]
+
+		logger.info("Retrieval complete. Today's data obtained for %s.", self.code)
 		
-		# clean the data according to how the website presented it
-		date = temp_data[1].split(' ')[0]
-		open_p = temp_data[9].split('\n')[2]
-		high = temp_data[10].split('\n')[2]
-		low = temp_data[11].split('\n')[2]
-		close = temp_data[7].split('\n')[2]
-		vol = temp_data[12].split('\n')[2].replace(',', '')
-
-		[month,day,year] = date.split('/')
-		proper_date = year + month.zfill(2) + day.zfill(2)
-
-		##=====================================================
-		# all neatly tabulated ready for writing
-		eod_data = [proper_date, open_p, high, low, close, vol]
-
-		logger.info("Retrieval complete")
-
 		return eod_data
 
 	def FetchHistorical(self, date):
 		## Decides which way to get historical data
 		## either from the web, or the raw data archive
+		logger = logging.getLogger(LOG)
+		logger.info("Started search for historical data for %s on %s", self.code, date)
+
 		new_data = False
 		raw_data_dates = self.GetRawDataDates()
 		
@@ -197,6 +247,11 @@ class FromBigCharts:#(Updater):
 		else:
 			new_data = self.FetchHistoricalFromBigCharts(date)
 
+		if new_data:
+			logger.info("Search complete. Data successfully retrieved for %s on %s", self.code, date)
+		else:
+			logger.info("Search complete. No data found for %s on %s", self.code, date)
+		
 		return new_data
 
 	def FetchHistoricalFromBigCharts(self, date):
@@ -205,13 +260,14 @@ class FromBigCharts:#(Updater):
 
 		logger = logging.getLogger(LOG)
 		date = str(date)
-		logger.info("Retrieving data from %s", date)
+		
 
 		year 	= date[:4]
 		month 	= date[4:6]
 		day 	= date[6:]
 
 		hist_url = self.HISTORICAL_URL + month + '%2F' + day + '%2F' + year + self.HISTORICAL_URL_END
+		logger.info("Searching online for %s on %s from %s",self.code, date, hist_url)
 		
 		try:
 			response = requests.get(hist_url)
@@ -220,8 +276,8 @@ class FromBigCharts:#(Updater):
 			table = soup.find('table', id="historicalquote")
 
 		except:
-			logger.error("There was an issue retrieving EoD data for " + self.code + ", check that lxml is installed.")
-			raise Exception("There was an issue retrieving EoD data for " + self.code + ", check that lxml is installed.")
+			logger.error("There was an issue retrieving EoD data for " + self.code + ". Check that lxml is installed.")
+			raise Exception("There was an issue retrieving EoD data for " + self.code + ". Check that lxml is installed.")
 			return False
 
 		##=====================================================
@@ -246,14 +302,14 @@ class FromBigCharts:#(Updater):
 			# all neatly tabulated ready for writing
 			hist_data = [date, open_p, high, low, close, vol]
 
-			logger.info("Retrieval complete for %s", date)
 			if hist_data[-1] == 'n/a':
 				logger.info('Caught day with no trading, fixing volume column')
 				hist_data[-1] = 0
 		else:
-			hist_data = False
 			logger.info("No data on %s", date)
+			return False
 
+		logger.info("Online historical data found!")
 		return hist_data
 
 	def FetchHistoricalFromRawData(self,date):
@@ -266,7 +322,7 @@ class FromBigCharts:#(Updater):
 		## In the data file are all stocks for that date,
 		## need to get the specific one we're after
 		data_file = RAW_PATH + date + '.txt'
-		logger.info("Retrieving data for %s from %s",self.code, data_file)
+		logger.info("Searching local archive for %s on %s",self.code, date)
 
 		data = []
 
@@ -278,11 +334,15 @@ class FromBigCharts:#(Updater):
 						data = line[1:]
 						break
 		except:
-			logger.info("Local historical data not found, need to retrieve from web")
-			data = False
+			logger.info("Error reading file %s", data_file)
+			return False
 
-
-		return data
+		if data:
+			logger.info("Local historical data found! %s", data)
+			return data
+		else:
+			logger.info("No local historical data found. Either not in archive, or wasn't trading yet.")
+			return False
 
 	def GetNextDate(self,date):
 		## Takes a date as a string in the format YYYYMMDD

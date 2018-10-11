@@ -10,10 +10,6 @@
 ## I imagine it will be possible to have multiple trackers running with different watch lists, but I don't see why this should happen
 ## Perhaps running this as a singleton would be a good idea
 
-import sys
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
-sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 import csv
 

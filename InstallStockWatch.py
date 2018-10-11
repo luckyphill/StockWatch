@@ -4,4 +4,4 @@
 import installer
 
 
-inst = installer.Installer('/Users/Manda/StockWatch/', '/Users/Manda/data/', 1997)
+inst = installer.Installer('/Users/phillipbrown/StockWatch/', '/Users/phillipbrown/StockWatch/data/raw_data/', 2008)
