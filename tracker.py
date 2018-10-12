@@ -134,9 +134,12 @@ class Tracker:
 					multi_line = multi_line + '\n' + msg
 				message.popupmsg(stock, multi_line)
 
-	def Notification(self):
-		## Notifies the user of a signal
-		pass	
+	def FirstRunUpdate(self):
+		## Updates all the codes in watch_list so they have everything
+		## except for today's data
+		## This only needs to be run once upon start up
+		self.UpdateStockDict()
 
-
+		for code,stock in self.stocks.iteritems():
+			stock.GetOldData()
 
