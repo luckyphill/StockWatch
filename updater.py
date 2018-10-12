@@ -207,8 +207,12 @@ class FromBigCharts:#(Updater):
 			close = temp_data[7].split('\n')[2]
 			vol = temp_data[12].split('\n')[2].replace(',', '')
 
-			[month,day,year] = date.split('/')
-			proper_date = year + month.zfill(2) + day.zfill(2)
+			## Occasionally the page loads but there is nothing in the field 'date'
+			try:
+				[month,day,year] = date.split('/')
+				proper_date = year + month.zfill(2) + day.zfill(2)
+			except:
+				logger.info("Potential code conflict. No entry for date found for %s", self.code)
 
 			
 
