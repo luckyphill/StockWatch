@@ -22,18 +22,25 @@ def popupmsg(stock, msg):
 	
 	data = stock.GetStockData(200)
 	close_price = [line[4] for line in data]
+	x = list(range(len(close_price)))
 	
-	a.fill_between(list(range(200)),close_price,facecolor='#a2bffe', edgecolor = 'none')
+	l = a.plot(x, close_price, color='black', linewidth = 1.5)#color='#a2bffe')
+	a.fill_between(list(range(len(close_price))), close_price, facecolor='#a2bffe', edgecolor = 'none')
 	a.tick_params(axis='x',which='both', bottom=False, top=False, labelbottom=False)
-	a.set_xlim(0,199)
+	a.set_xlim(0,len(close_price)-1)
+
 	bottom = min(close_price)
 	top = max(close_price)
 	rng = top - bottom
 	delta = round(rng/6, -int(floor(log10(abs(rng/6)))))
-
 	a.set_ylim(bottom - delta, top + delta)
 
 	a.grid()
+
+	a.spines['top'].set_color((.8,.8,.8))
+	a.spines['bottom'].set_color((.8,.8,.8))
+	a.spines['left'].set_color((.8,.8,.8))
+	a.spines['right'].set_color((.8,.8,.8))
 
 	canvas = FigureCanvasTkAgg(f,popup)
 	canvas.show()
