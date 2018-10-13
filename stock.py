@@ -90,13 +90,12 @@ class Stock:
 		else:
 			logger.info("No new data available for %s", self.code)
 
-	def FindOldData(self):
+	def FindOldData(self, today = dt.date.today().strftime ("%Y%m%d")):
 		## This can run at any time, but will usually only once run when StockWatch is booted 
 		## It will check today's date, then collect all the historical data up to but not including
 		## today
+		## If an argument is given, it treats that as the last date we'll go up to
 		logger = logging.getLogger(LOG)
-
-		today = dt.date.today().strftime ("%Y%m%d")
 
 		if os.path.isfile(self.DATA_FILE):
 			## If there is already data, start from there
@@ -108,14 +107,14 @@ class Stock:
 
 		## Grab old data only if 
 		if last_quote_date < today:
-			old_data = self.FetchOldData(last_quote_date, today)
+			old_data = self.updater.FetchOldData(last_quote_date, today)
 		else:
 			logger.info("Old data for %s appears to be up to date",self.code)
 			return None
 
 		
 		if old_data:
-			logger.info("Writing %d new line(s) to file for %s", len(new_data), self.code )
+			logger.info("Writing %d new line(s) to file for %s", len(old_data), self.code )
 			with open(self.DATA_FILE,'a') as csvfile:
 				data_writer = csv.writer(csvfile)
 				for row in old_data:

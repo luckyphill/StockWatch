@@ -68,7 +68,6 @@ class Tracker:
 			if code not in watch_list:
 				del self.stocks[code]
 
-
 	def EoDUpdate(self):
 		## Updates each stock with the latest data
 		## If using BigCharts, this has to run after at least 4pm because the historical

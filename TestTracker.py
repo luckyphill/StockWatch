@@ -64,5 +64,10 @@ class TestTracker(object):
 		trk = tracker.Tracker(WATCH_LIST_FILE)
 
 		trk.EoDUpdate()
+
+	def test_FirstRunUpdate(self):
+		trk = tracker.Tracker(WATCH_LIST_FILE)
+
+		trk.FirstRunUpdate()
 		
 
