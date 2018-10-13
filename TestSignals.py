@@ -11,10 +11,6 @@ import updater
 import tracker
 import signals
 
-import sys
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
-sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
 import message

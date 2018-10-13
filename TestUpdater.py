@@ -9,15 +9,14 @@ import stock
 import installer
 import updater
 
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'  ## home
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/' ## Uni
-sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
-RAW_DATA = PATH_FOR_INSTALLER + 'raw_data/'
+
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/development/'  ## home
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/development/' ## Uni
 
 TEST_CODE = 'APT'
-TEST_TIME_SERIES_FILE = PATH_FOR_INSTALLER + 'data/' + TEST_CODE + "/time_series.csv"
+TEST_TIME_SERIES_FILE = PATH_FOR_INSTALLER + 'data/stock_data/' + TEST_CODE + "/time_series.csv"
 
 TEST_EARLIEST_YEAR = 2016
 

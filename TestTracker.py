@@ -10,17 +10,13 @@ import installer
 import updater
 import tracker
 
-import sys
-#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
-sys.path.insert(0, PATH_FOR_INSTALLER)
 from global_vars import *
 
-
-RAW_DATA = PATH_FOR_INSTALLER + 'raw_data/'
+#PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/development/'  ## home
+PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/development/' ## Uni
 
 TEST_CODE = 'APT'
-TEST_TIME_SERIES_FILE = PATH_FOR_INSTALLER + 'data/' + TEST_CODE + "/time_series.csv"
+TEST_TIME_SERIES_FILE = PATH_FOR_INSTALLER + 'data/stock_data/' + TEST_CODE + "/time_series.csv"
 
 TEST_EARLIEST_YEAR = 2016
 
@@ -55,7 +51,7 @@ class TestTracker(object):
 		## Need to make some assert statements here
 
 
-	def test_EoDUpdate(self):
+	def xtest_EoDUpdate(self):
 		trk = tracker.Tracker(WATCH_LIST_FILE)
 
 		trk.EoDUpdate()

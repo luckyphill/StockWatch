@@ -68,8 +68,10 @@ class Tracker:
 		## most likely due to a time difference between here and the US
 		self.UpdateStockDict()
 
-		for code,stock in self.stocks.iteritems():
-			stock.GetNewData()
+		codes = sorted(list(self.stocks.keys()))
+
+		for code in codes:
+			self.stocks[code].GetNewData()
 
 	def UpdateArchive(self):
 		# This will run once a week
@@ -117,7 +119,7 @@ class Tracker:
 				logger.info("Moving successful")
 
 			except:
-				log.warning("The downloaded file could not be extracted. This may be due to the the file not existing on the web, so it returns an html file")
+				logger.warning("The downloaded file could not be extracted. This may be due to the the file not existing on the web, so it returns an html file")
 
 		else:
 			logger.info("Archive data already exists")
@@ -126,8 +128,10 @@ class Tracker:
 		## For each stock, looks for signals
 		## Need to plan how this will work
 		signaler = signals.Signals()
-		for code,stock in self.stocks.iteritems():
-			msgs = signaler.CheckForSignals(stock)
+		codes = sorted(list(self.stocks.keys()))
+
+		for code in codes:
+			msgs = signaler.CheckForSignals(self.stocks[code])
 			if msgs:
 				multi_line = ''
 				for msg in msgs:
