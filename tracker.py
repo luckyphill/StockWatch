@@ -143,7 +143,7 @@ class Tracker:
 				multi_line = ''
 				for msg in msgs:
 					multi_line = multi_line + '\n' + msg
-				message.popupmsg(stock, multi_line)
+				message.popupmsg(self.stocks[code], multi_line)
 
 	def FirstRunUpdate(self):
 		## Updates all the codes in watch_list so they have everything

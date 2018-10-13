@@ -242,8 +242,20 @@ class FromBigCharts:#(Updater):
 
 					## If any data was retrieved, add it to old_data
 					if data:
-						logger.info("Retrieved data for %s, %s", next_date, data)
-						old_data.append(data)
+						if data[1]=='n/a':
+							if data[4]=='n/a':
+								data = False
+								logger.info('Issue with data retrieved, price data missing')
+							else:
+								data[1] = data[4]
+								data[2] = data[4]
+								data[3] = data[4]
+								old_data.append(data)
+								logger.info("Caught the no-price-movement-n/a issue.")
+						else:
+							logger.info("Retrieved data for %s, %s", next_date, data)
+							old_data.append(data)
+								
 			except:
 				## Date doesn't exist
 				logger.info("February problem caught")

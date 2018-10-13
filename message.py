@@ -7,6 +7,7 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 import sys
+import stock
 
 from global_vars import *
 
@@ -33,7 +34,7 @@ def popupmsg(stock, msg):
 	top = max(close_price)
 	rng = top - bottom
 	delta = round(rng/6, -int(floor(log10(abs(rng/6)))))
-	a.set_ylim(bottom - delta, top + delta)
+	a.set_ylim(max(bottom - delta,0), top + delta)
 
 	a.grid()
 
