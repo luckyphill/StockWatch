@@ -61,7 +61,7 @@ class TestUpdater(object):
 		upd = updater.FromBigCharts(TEST_CODE)
 		## Will only work on 20180929
 		data_20180928 = ['20180928','17.95','18.50','17.82','17.95','2053325']
-		retrieved_data = upd.FetchNewData('20180927')
+		retrieved_data = upd.FetchData('20180927')
 		print retrieved_data
 		assert retrieved_data[0] == data_20180928
 
@@ -90,7 +90,7 @@ class TestUpdater(object):
 		multiple_dates = [ ['20180926', u'16.24', u'17', u'16.16', u'16.97', u'1524296'],
 							['20180927', u'17.25', u'17.85', u'16.7', u'17.8', u'1846039'],
 							['20180928', u'17.95', u'18.5', u'17.82', u'17.95', u'2053325']]
-		retrieved_data = upd.FetchNewData('20180925')
+		retrieved_data = upd.FetchData('20180925')
 		print retrieved_data
 		assert retrieved_data[:3] == multiple_dates
 
@@ -118,7 +118,7 @@ class TestUpdater(object):
 
 		## Will only work on 20180929
 		data_20180112 = ['20180112','6.45','6.53','6.44','6.5','825978']
-		retrieved_data = upd.FetchNewData('20180111','20180112')
+		retrieved_data = upd.FetchData('20180111','20180112')
 		print retrieved_data
 		assert retrieved_data[0] == data_20180112
 
@@ -145,6 +145,6 @@ class TestUpdater(object):
 		multiple_dates = [ ['20180926', u'16.24', u'17', u'16.16', u'16.97', u'1524296'],
 							['20180927', u'17.25', u'17.85', u'16.7', u'17.8', u'1846039'],
 							['20180928', u'17.95', u'18.5', u'17.82', u'17.95', u'2053325']]
-		retrieved_data = upd.FetchNewData('20180925','20180928')
+		retrieved_data = upd.FetchData('20180925','20180928')
 		assert retrieved_data[:3] == multiple_dates
 

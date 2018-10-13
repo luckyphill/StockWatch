@@ -1,14 +1,6 @@
 ## The stock object
 ## Should do all the handling of actual stock data
 
-# ##=====================================================
-# ## This section is only needed for testing
-# ## It should be deleted before running properly
-# import sys
-# #PATH_FOR_INSTALLER = '/Users/Manda/StockWatch/testing/'
-# PATH_FOR_INSTALLER = '/Users/phillipbrown/StockWatch/testing/'
-# sys.path.insert(0, PATH_FOR_INSTALLER)
-# ##=====================================================
 
 import os
 import csv
@@ -72,20 +64,21 @@ class Stock:
 
 		return stockData
 
-	def GetNewData(self):
+	def FindNewData(self):
 		## This will get the latest data at a time controlled by Tracker
 		## The data is retrieved by an Updater object, then written to file
 
 		logger = logging.getLogger(LOG)
 		if os.path.isfile(self.DATA_FILE):
-			new_data = self.updater.FetchNewData(self.GetLastDate())
+			new_data = self.updater.FetchData(self.GetLastDate())
 		else:
 			## Collect 5 years worth of data if there is none
 			## If there is no data in the archives, checks the maximum limit for web scraping
 			## before it tried to download
 			five_years_ago = dt.date.today() - dt.timedelta(days=5*365)
 			earliest_date = five_years_ago.strftime ("%Y%m%d")
-			new_data = self.updater.FetchNewData(earliest_date)
+			
+			new_data = self.updater.FetchData(earliest_date)
 		
 		## new_data is either a list with the new data or bool False
 		if new_data:
@@ -96,4 +89,41 @@ class Stock:
 					data_writer.writerow(row)
 		else:
 			logger.info("No new data available for %s", self.code)
+
+	def FindOldData(self):
+		## This can run at any time, but will usually only once run when StockWatch is booted 
+		## It will check today's date, then collect all the historical data up to but not including
+		## today
+		logger = logging.getLogger(LOG)
+
+		today = dt.date.today().strftime ("%Y%m%d")
+
+		if os.path.isfile(self.DATA_FILE):
+			## If there is already data, start from there
+			last_quote_date = self.GetLastDate()
+		else:
+			## If there is no data, start from 5 years ago
+			five_years_ago = dt.date.today() - dt.timedelta(days=5*365)
+			last_quote_date = five_years_ago.strftime ("%Y%m%d")
+
+		## Grab old data only if 
+		if last_quote_date < today:
+			old_data = self.FetchOldData(last_quote_date, today)
+		else:
+			logger.info("Old data for %s appears to be up to date",self.code)
+			return None
+
+		
+		if old_data:
+			logger.info("Writing %d new line(s) to file for %s", len(new_data), self.code )
+			with open(self.DATA_FILE,'a') as csvfile:
+				data_writer = csv.writer(csvfile)
+				for row in old_data:
+					data_writer.writerow(row)
+		else:
+			logger.info("Old data for %s appears to be up to date",self.code)
+			return None
+
+
+
 

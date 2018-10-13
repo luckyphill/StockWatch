@@ -25,13 +25,22 @@ COMPARISON_FILES_PATH = PATH_FOR_INSTALLER + 'cmp_files/'
 COMPARISON_TIME_SERIES_FILE = COMPARISON_FILES_PATH + COMPARISON_CODE + "/time_series.csv"
 
 WATCH_LIST_FILE = COMPARISON_FILES_PATH + 'watch_list.csv'
+CHANGED_WATCH_LIST_FILE = COMPARISON_FILES_PATH + 'changed_watch_list.csv'
 class TestTracker(object):
 	## testing each function of Tracker
 	def test_GetWatchList(self):
+		## Check that it gets the correct watch list
 		trk = tracker.Tracker(WATCH_LIST_FILE)
 		cmp_wl = ['APT', 'CBA', 'NAB', 'ANZ', 'TRS', 'IFL', 'BHP', 'CSL', 'AMP', 'WOW']
 		wl = trk.GetWatchList()
 		assert wl.sort() == cmp_wl.sort()
+
+		## Check that it correctly removes codes deleted from watch_list
+		trk.WATCH_LIST_FILE = CHANGED_WATCH_LIST_FILE
+		cmp_cwl = ['APT', 'CBA', 'NAB', 'ANZ', 'TRS', 'IFL', 'BHP', 'CSL', 'AMP']
+		cwl = trk.GetWatchList()
+		assert cwl.sort() == cmp_cwl.sort()
+
 
 	def test_GetWatchList_fails(self):
 		trk = tracker.Tracker('/path/that/doesnt/exist')

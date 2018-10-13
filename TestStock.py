@@ -47,11 +47,11 @@ class TestStock(object):
 		print len(data_comp)
 		assert data[:130] == data_comp
 
-	def test_GetNewData(self):
+	def test_FindNewData(self):
 		##============================================================
 		## Check that update works, and GetLastDate returns the correct date
 		st = stock.Stock(TEST_CODE, updater.FromBigCharts)
-		st.GetNewData()
+		st.FindNewData()
 		last_date = st.GetLastDate()
 		today = dt.date.today().strftime ("%Y%m%d")
 		assert last_date == today

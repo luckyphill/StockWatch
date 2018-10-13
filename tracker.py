@@ -61,6 +61,14 @@ class Tracker:
 			if code not in self.stocks:
 				self.stocks[code] = stock.Stock(code,updater.FromBigCharts)
 
+		## If stock is in self.stocks but no longer in watch_list, remove it
+		codes = sorted(list(self.stocks.keys()))
+
+		for code in codes:
+			if code not in watch_list:
+				del self.stocks[code]
+
+
 	def EoDUpdate(self):
 		## Updates each stock with the latest data
 		## If using BigCharts, this has to run after at least 4pm because the historical
@@ -71,7 +79,7 @@ class Tracker:
 		codes = sorted(list(self.stocks.keys()))
 
 		for code in codes:
-			self.stocks[code].GetNewData()
+			self.stocks[code].FindNewData()
 
 	def UpdateArchive(self):
 		# This will run once a week
@@ -144,6 +152,8 @@ class Tracker:
 		## This only needs to be run once upon start up
 		self.UpdateStockDict()
 
-		for code,stock in self.stocks.iteritems():
-			stock.GetOldData()
+		codes = sorted(list(self.stocks.keys()))
+
+		for code in codes:
+			self.stocks[code].FindOldData()
 

@@ -24,7 +24,7 @@ class Updater:
 		self.code = code
 
 	@abstractmethod
-	def FetchNewData(self, last_date):
+	def FetchData(self, last_date):
 		pass
 
 class FromBigCharts:#(Updater):
@@ -43,7 +43,7 @@ class FromBigCharts:#(Updater):
 		self.HISTORICAL_URL = HISTORICAL_URL + self.code + HISTORICAL_URL_MID
 		self.HISTORICAL_URL_END = HISTORICAL_URL_END
 
-	def FetchNewData(self, last_quote_date):
+	def FetchData(self, last_quote_date):
 		## Gets the all the missing data from BigCharts or archives
 		## last_quote_date will be provided from Stock, which will get it
 		## directly from the file. This is the most recent data that exists
@@ -71,7 +71,7 @@ class FromBigCharts:#(Updater):
 				## Something has gone wrong with retrieval of todays data
 				## This could happen if BigCharts doesn't list the stock
 				## It could also happen if the website fails to load (i.e. no internet connection)
-				## In this case the best approach is to abort the FetchNewData method
+				## In this case the best approach is to abort the FetchData method
 				logger.info("Data not retrieved for %s", self.code)
 				return False
 
@@ -86,58 +86,12 @@ class FromBigCharts:#(Updater):
 
 			logger.info("Today's data received %s",most_recent)
 
-			next_date = self.GetNextDate(last_quote_date)
 
-			## If the next date after last_quote_date isn't most_recent_date
-			## then we need to make sure the data in between exists
-			## This while loop will always be triggered on a Monday so
-			## need to skip the data fetching if next_date is a weekend
+			## If there are any days inbetween where the data hasn't been collected, do it now
+			old_data = self.FetchOldData(last_quote_date, most_recent_date)
 
-			## It can look back an arbitrary amount of time backwards
-			## but it only grabs data from the web if it won't end up
-			## grabbing more than MAX_YEARS_AGO_FOR_SCRAPING worth of data
-			## If it's older than that, only looks in the archives
-			## This might mean that data is missed if it is available
-			## on the web not not in the archive
-			logger.info("Checking for other missing dates")
-			while next_date < most_recent_date:
-				year 	= int(next_date[:4])
-				month 	= int(next_date[4:6])
-				day 	= int(next_date[6:])
-
-				try:
-					## This put in a try statement because GetNextDate is a simplified date checker
-					## and it always assumes 29 days in Feb, therefore dt.date will throw an exception
-					## since the date doesn't exist every year
-					dt_next_date = dt.date(year,month,day)
-
-					## If is is a weekday, then retrieve the data
-					if dt_next_date.weekday()<5:				
-						max_years_ago = dt.date.today() - dt.timedelta(days = 365 * self.MAX_YEARS_AGO_FOR_SCRAPING) 
-						
-						## Date is not more than MAX_YEARS_AGO_FOR_SCRAPING so can get from BigCharts
-						## Else if it is too far long ago, then restrict to archives
-						logger.info("Searching for data for %s on %s", self.code, next_date)
-						if  dt_next_date > max_years_ago:
-							data = self.FetchHistorical(next_date)
-						else:
-							raw_data_dates = self.GetRawDataDates()
-							if next_date in raw_data_dates:
-								data = self.FetchHistoricalFromRawData(next_date)
-							else:
-								logger.info("The date %s is not in the archive", next_date)
-								data = False
-
-						## If any data was retrieved, add it to new_data
-						if data:
-							logger.info("Retrieved data for %s, %s", next_date, data)
-							new_data.append(data)
-				except:
-					## Date doesn't exist
-					logger.info("February problem caught")
-					
-				next_date = self.GetNextDate(next_date)
-
+			if old_data:
+				new_data = old_data
 
 			logger.info("All missing data retrieved for %s on %s, validating", self.code, today)
 			new_data.append(most_recent)
@@ -151,8 +105,13 @@ class FromBigCharts:#(Updater):
 				## The following check will be triggered when there is no trading today and/or yesterday
 				## so need to account for this case
 				if new_data[-1][-1] != 0 and new_data[-2][-1] !=0:
+					## The two most recent days retreived both had trading
 					try:
 						assert new_data[-1][1:5] != new_data[-2][1:5]
+						## This should catch it most of the time, but in the time between getting today's data
+						## and yesterday's data it is possible that a new daily high low close could be set
+						## The only way to combat this completely is to make absolutely sure checking only happens 
+						## after GMT -6
 					except:
 						logger.error("BigCharts time difference bug encountered for %s on %s. Removed the offending data.", self.code, most_recent_date)
 						## Remove the last two lines of data
@@ -214,6 +173,7 @@ class FromBigCharts:#(Updater):
 				proper_date = year + month.zfill(2) + day.zfill(2)
 			except:
 				logger.info("Potential code conflict. No entry for date found for %s", self.code)
+				return False
 
 			
 
@@ -232,6 +192,65 @@ class FromBigCharts:#(Updater):
 		logger.info("Retrieval complete. Today's data obtained for %s.", self.code)
 		
 		return eod_data
+
+	def FetchOldData(self, last_quote_date, most_recent_date):
+		## If the next date after last_quote_date isn't most_recent_date
+		## then we need to make sure the data in between exists
+		## This while loop will always be triggered on a Monday so
+		## need to skip the data fetching if next_date is a weekend
+
+		## It can look back an arbitrary amount of time backwards
+		## but it only grabs data from the web if it won't end up
+		## grabbing more than MAX_YEARS_AGO_FOR_SCRAPING worth of data
+		## If it's older than that, only looks in the archives
+		## This might mean that data is missed if it is available
+		## on the web not not in the archive
+		logger = logging.getLogger(LOG)
+		logger.info("Checking for other missing dates")
+
+		next_date = self.GetNextDate(last_quote_date)
+
+		old_data = []
+
+		while next_date < most_recent_date:
+			year 	= int(next_date[:4])
+			month 	= int(next_date[4:6])
+			day 	= int(next_date[6:])
+
+			try:
+				## This put in a try statement because GetNextDate is a simplified date checker
+				## and it always assumes 29 days in Feb, therefore dt.date will throw an exception
+				## since the date doesn't exist every year
+				dt_next_date = dt.date(year,month,day)
+
+				## If is is a weekday, then retrieve the data
+				if dt_next_date.weekday()<5:				
+					max_years_ago = dt.date.today() - dt.timedelta(days = 365 * self.MAX_YEARS_AGO_FOR_SCRAPING) 
+					
+					## Date is not more than MAX_YEARS_AGO_FOR_SCRAPING so can get from BigCharts
+					## Else if it is too far long ago, then restrict to archives
+					logger.info("Searching for data for %s on %s", self.code, next_date)
+					if  dt_next_date > max_years_ago:
+						data = self.FetchHistorical(next_date)
+					else:
+						raw_data_dates = self.GetRawDataDates()
+						if next_date in raw_data_dates:
+							data = self.FetchHistoricalFromRawData(next_date)
+						else:
+							logger.info("The date %s is not in the archive", next_date)
+							data = False
+
+					## If any data was retrieved, add it to old_data
+					if data:
+						logger.info("Retrieved data for %s, %s", next_date, data)
+						old_data.append(data)
+			except:
+				## Date doesn't exist
+				logger.info("February problem caught")
+				
+			next_date = self.GetNextDate(next_date)
+
+		return old_data
 
 	def FetchHistorical(self, date):
 		## Decides which way to get historical data
@@ -389,7 +408,7 @@ class ForTesting:
 		self.NEW = APP_PATH + 'fake_new_data/'
 		self.code = code
 
-	def FetchNewData(self, last_quote_date, fake_today):
+	def FetchData(self, last_quote_date, fake_today):
 		## Gets the all the missing data from BigCharts
 		## last_quote_date will be provided from Stock, which will get it
 		## directly from the file.
